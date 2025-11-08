@@ -92,7 +92,7 @@ function App() {
   // État pour l'autocomplétion produits
   const [productSearch, setProductSearch] = useState('');
   const [showProductSuggestions, setShowProductSuggestions] = useState(false);
-  const [selectedVariant, setSelectedVariant] = useState('');
+  const [selectedVariants, setSelectedVariants] = useState({}); // { variantName: quantity }
 
   // États pour création rapide de produit dans nouvelle commande
   const [showQuickProductForm, setShowQuickProductForm] = useState(false);
@@ -106,7 +106,7 @@ function App() {
 
   // États pour l'ajout de produit à une commande existante
   const [addingProductToOrder, setAddingProductToOrder] = useState(null);
-  const [addProductForm, setAddProductForm] = useState({ productSearch: '', selectedProduct: '', selectedVariant: '', quantity: 1, customPrice: '' });
+  const [addProductForm, setAddProductForm] = useState({ productSearch: '', selectedProduct: '', selectedVariants: {}, quantity: 1, customPrice: '' });
   const [showAddProductSuggestions, setShowAddProductSuggestions] = useState(false);
 
   // États pour l'expédition avec transporteur et suivi
@@ -759,39 +759,52 @@ function App() {
     }
 
     const product = products.find(p => p.id === parseInt(selectedProduct));
-    
-    // Si le produit a des déclinaisons et qu'aucune n'est sélectionnée
-    if (product.variants && product.variants.length > 0 && !selectedVariant) {
-      alert('Veuillez sélectionner une déclinaison');
-      return;
-    }
 
-    let finalPrice = customPrice ? parseFloat(customPrice) : product.price;
-    let variantName = '';
+    // Si le produit a des déclinaisons
+    if (product.variants && product.variants.length > 0) {
+      // Vérifier qu'au moins une variante avec quantité > 0 est sélectionnée
+      const selectedVariantsWithQty = Object.entries(selectedVariants).filter(([_, qty]) => qty > 0);
 
-    // Si une déclinaison est sélectionnée
-    if (selectedVariant && product.variants) {
-      const variant = product.variants.find(v => v.name === selectedVariant);
-      if (variant) {
-        variantName = variant.name;
-        if (!customPrice) {
-          finalPrice = product.price + (variant.priceAdjustment || 0);
-        }
+      if (selectedVariantsWithQty.length === 0) {
+        alert('Veuillez sélectionner au moins une déclinaison avec une quantité');
+        return;
       }
+
+      // Créer un item pour chaque variante sélectionnée
+      const newItems = selectedVariantsWithQty.map(([variantName, qty]) => {
+        const variant = product.variants.find(v => v.name === variantName);
+        const finalPrice = customPrice ? parseFloat(customPrice) : (product.price + (variant?.priceAdjustment || 0));
+
+        return {
+          id: Date.now() + Math.random(), // Assurer l'unicité
+          productId: product.id,
+          name: product.name,
+          variant: variantName,
+          quantity: parseInt(qty),
+          price: finalPrice
+        };
+      });
+
+      setOrderItems([...orderItems, ...newItems]);
+    } else {
+      // Produit sans variantes : comportement classique
+      const finalPrice = customPrice ? parseFloat(customPrice) : product.price;
+
+      const newItem = {
+        id: Date.now(),
+        productId: product.id,
+        name: product.name,
+        variant: '',
+        quantity: parseInt(quantity),
+        price: finalPrice
+      };
+
+      setOrderItems([...orderItems, newItem]);
     }
 
-    const newItem = {
-      id: Date.now(),
-      productId: product.id,
-      name: product.name,
-      variant: variantName,
-      quantity: parseInt(quantity),
-      price: finalPrice
-    };
-
-    setOrderItems([...orderItems, newItem]);
+    // Réinitialisation
     setSelectedProduct('');
-    setSelectedVariant('');
+    setSelectedVariants({});
     setProductSearch('');
     setQuantity(1);
     setCustomPrice('');
@@ -1087,37 +1100,49 @@ function App() {
     }
 
     const product = products.find(p => p.id === parseInt(addProductForm.selectedProduct));
-    
-    if (product.variants && product.variants.length > 0 && !addProductForm.selectedVariant) {
-      alert('Veuillez sélectionner une déclinaison');
-      return;
-    }
-
-    let finalPrice = addProductForm.customPrice ? parseFloat(addProductForm.customPrice) : product.price;
-    let variantName = '';
-
-    if (addProductForm.selectedVariant && product.variants) {
-      const variant = product.variants.find(v => v.name === addProductForm.selectedVariant);
-      if (variant) {
-        variantName = variant.name;
-        if (!addProductForm.customPrice) {
-          finalPrice = product.price + (variant.priceAdjustment || 0);
-        }
-      }
-    }
 
     try {
       const order = orders.find(o => o.id === orderId);
-      const newItem = {
-        id: Date.now(),
-        productId: product.id,
-        name: product.name,
-        variant: variantName,
-        quantity: parseInt(addProductForm.quantity),
-        price: finalPrice
-      };
+      let newItems = [];
 
-      const updatedItems = [...order.items, newItem];
+      // Si le produit a des déclinaisons
+      if (product.variants && product.variants.length > 0) {
+        const selectedVariantsWithQty = Object.entries(addProductForm.selectedVariants).filter(([_, qty]) => qty > 0);
+
+        if (selectedVariantsWithQty.length === 0) {
+          alert('Veuillez sélectionner au moins une déclinaison avec une quantité');
+          return;
+        }
+
+        // Créer un item pour chaque variante sélectionnée
+        newItems = selectedVariantsWithQty.map(([variantName, qty]) => {
+          const variant = product.variants.find(v => v.name === variantName);
+          const finalPrice = addProductForm.customPrice ? parseFloat(addProductForm.customPrice) : (product.price + (variant?.priceAdjustment || 0));
+
+          return {
+            id: Date.now() + Math.random(),
+            productId: product.id,
+            name: product.name,
+            variant: variantName,
+            quantity: parseInt(qty),
+            price: finalPrice
+          };
+        });
+      } else {
+        // Produit sans variantes
+        const finalPrice = addProductForm.customPrice ? parseFloat(addProductForm.customPrice) : product.price;
+
+        newItems = [{
+          id: Date.now(),
+          productId: product.id,
+          name: product.name,
+          variant: '',
+          quantity: parseInt(addProductForm.quantity),
+          price: finalPrice
+        }];
+      }
+
+      const updatedItems = [...order.items, ...newItems];
       const newTotal = updatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
       const { error } = await supabase
@@ -1126,10 +1151,10 @@ function App() {
         .eq('id', orderId);
 
       if (error) throw error;
-      
+
       await loadOrders();
       setAddingProductToOrder(null);
-      setAddProductForm({ productSearch: '', selectedProduct: '', selectedVariant: '', quantity: 1, customPrice: '' });
+      setAddProductForm({ productSearch: '', selectedProduct: '', selectedVariants: {}, quantity: 1, customPrice: '' });
     } catch (error) {
       console.error('Erreur ajout produit:', error);
       alert('Erreur lors de l\'ajout du produit');
@@ -1942,30 +1967,53 @@ function App() {
                   )}
                 </div>
                 
-                {/* Sélecteur de déclinaison */}
+                {/* Sélecteur multi-variantes */}
                 {hasProductVariants && (
-                  <select
-                    value={selectedVariant}
-                    onChange={(e) => {
-                      setSelectedVariant(e.target.value);
-                      const variant = currentProduct.variants.find(v => v.name === e.target.value);
-                      if (variant && !customPrice) {
-                        setCustomPrice((currentProduct.price + (variant.priceAdjustment || 0)).toString());
-                      }
-                    }}
-                    className="p-3 border rounded-lg"
-                  >
-                    <option value="">-- Déclinaison --</option>
+                  <div className="p-4 bg-purple-50 border-2 border-purple-200 rounded-lg space-y-2">
+                    <h4 className="font-bold text-purple-800 mb-2">🎨 Sélectionnez les déclinaisons :</h4>
                     {currentProduct.variants.map((variant, idx) => (
-                      <option key={idx} value={variant.name}>
-                        {variant.name} {variant.priceAdjustment !== 0 && `(${variant.priceAdjustment > 0 ? '+' : ''}${variant.priceAdjustment.toFixed(2)} €)`}
-                      </option>
+                      <div key={idx} className="flex items-center gap-3 bg-white p-2 rounded border">
+                        <div className="flex-1 flex items-center gap-2">
+                          <span className="font-medium">{variant.name}</span>
+                          {variant.priceAdjustment !== 0 && (
+                            <span className="text-xs text-gray-600">
+                              ({variant.priceAdjustment > 0 ? '+' : ''}{variant.priceAdjustment.toFixed(2)} €)
+                            </span>
+                          )}
+                          <span className="text-sm text-gray-500">
+                            = {(currentProduct.price + (variant.priceAdjustment || 0)).toFixed(2)} €
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm text-gray-600">Quantité :</label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={selectedVariants[variant.name] || 0}
+                            onChange={(e) => {
+                              const qty = parseInt(e.target.value) || 0;
+                              setSelectedVariants({
+                                ...selectedVariants,
+                                [variant.name]: qty
+                              });
+                            }}
+                            className="w-20 p-2 border rounded text-center"
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
                     ))}
-                  </select>
+                  </div>
                 )}
-                
-                <input type="number" min="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="Quantité" className="p-3 border rounded-lg" />
-                <input type="number" step="0.01" value={customPrice} onChange={(e) => setCustomPrice(e.target.value)} placeholder="Prix unitaire" className="p-3 border rounded-lg" />
+
+                {/* Champs quantité et prix uniquement pour produits sans variantes */}
+                {!hasProductVariants && (
+                  <>
+                    <input type="number" min="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="Quantité" className="p-3 border rounded-lg" />
+                    <input type="number" step="0.01" value={customPrice} onChange={(e) => setCustomPrice(e.target.value)} placeholder="Prix unitaire" className="p-3 border rounded-lg" />
+                  </>
+                )}
+
                 <button onClick={addItemToOrder} disabled={!selectedProduct} className={`px-6 py-3 rounded-lg flex items-center justify-center gap-2 ${selectedProduct ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}>
                   <Plus size={18} />Ajouter
                 </button>
@@ -2183,7 +2231,7 @@ function App() {
                                         selectedProduct: product.id.toString(),
                                         productSearch: product.name,
                                         customPrice: product.price.toString(),
-                                        selectedVariant: ''
+                                        selectedVariants: {}
                                       });
                                       setShowAddProductSuggestions(false);
                                     }}
@@ -2199,46 +2247,29 @@ function App() {
                               </div>
                             )}
                           </div>
-                          
-                          {addProductForm.selectedProduct && products.find(p => p.id === parseInt(addProductForm.selectedProduct))?.variants?.length > 0 && (
-                            <select
-                              value={addProductForm.selectedVariant}
-                              onChange={(e) => {
-                                const product = products.find(p => p.id === parseInt(addProductForm.selectedProduct));
-                                const variant = product.variants.find(v => v.name === e.target.value);
-                                setAddProductForm({
-                                  ...addProductForm,
-                                  selectedVariant: e.target.value,
-                                  customPrice: variant ? (product.price + (variant.priceAdjustment || 0)).toString() : product.price.toString()
-                                });
-                              }}
-                              className="p-2 border rounded-lg"
-                            >
-                              <option value="">-- Déclinaison --</option>
-                              {products.find(p => p.id === parseInt(addProductForm.selectedProduct)).variants.map((variant, idx) => (
-                                <option key={idx} value={variant.name}>
-                                  {variant.name} {variant.priceAdjustment !== 0 && `(${variant.priceAdjustment > 0 ? '+' : ''}${variant.priceAdjustment.toFixed(2)} €)`}
-                                </option>
-                              ))}
-                            </select>
+
+                          {/* Champs quantité/prix pour produits sans variantes */}
+                          {addProductForm.selectedProduct && !products.find(p => p.id === parseInt(addProductForm.selectedProduct))?.variants?.length && (
+                            <>
+                              <input
+                                type="number"
+                                min="1"
+                                value={addProductForm.quantity}
+                                onChange={(e) => setAddProductForm({...addProductForm, quantity: e.target.value})}
+                                placeholder="Quantité"
+                                className="p-2 border rounded-lg"
+                              />
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={addProductForm.customPrice}
+                                onChange={(e) => setAddProductForm({...addProductForm, customPrice: e.target.value})}
+                                placeholder="Prix"
+                                className="p-2 border rounded-lg"
+                              />
+                            </>
                           )}
-                          
-                          <input
-                            type="number"
-                            min="1"
-                            value={addProductForm.quantity}
-                            onChange={(e) => setAddProductForm({...addProductForm, quantity: e.target.value})}
-                            placeholder="Quantité"
-                            className="p-2 border rounded-lg"
-                          />
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={addProductForm.customPrice}
-                            onChange={(e) => setAddProductForm({...addProductForm, customPrice: e.target.value})}
-                            placeholder="Prix"
-                            className="p-2 border rounded-lg"
-                          />
+
                           <button
                             onClick={() => addProductToExistingOrder(order.id)}
                             disabled={!addProductForm.selectedProduct}
@@ -2251,10 +2282,52 @@ function App() {
                             <Plus size={16} />Ajouter
                           </button>
                         </div>
+
+                        {/* Interface multi-variantes pour produits avec déclinaisons */}
+                        {addProductForm.selectedProduct && products.find(p => p.id === parseInt(addProductForm.selectedProduct))?.variants?.length > 0 && (
+                          <div className="p-4 bg-purple-50 border-2 border-purple-200 rounded-lg space-y-2">
+                            <h4 className="font-bold text-purple-800 mb-2">🎨 Sélectionnez les déclinaisons :</h4>
+                            {products.find(p => p.id === parseInt(addProductForm.selectedProduct)).variants.map((variant, idx) => (
+                              <div key={idx} className="flex items-center gap-3 bg-white p-2 rounded border">
+                                <div className="flex-1 flex items-center gap-2">
+                                  <span className="font-medium">{variant.name}</span>
+                                  {variant.priceAdjustment !== 0 && (
+                                    <span className="text-xs text-gray-600">
+                                      ({variant.priceAdjustment > 0 ? '+' : ''}{variant.priceAdjustment.toFixed(2)} €)
+                                    </span>
+                                  )}
+                                  <span className="text-sm text-gray-500">
+                                    = {(products.find(p => p.id === parseInt(addProductForm.selectedProduct)).price + (variant.priceAdjustment || 0)).toFixed(2)} €
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <label className="text-sm text-gray-600">Quantité :</label>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={addProductForm.selectedVariants[variant.name] || 0}
+                                    onChange={(e) => {
+                                      const qty = parseInt(e.target.value) || 0;
+                                      setAddProductForm({
+                                        ...addProductForm,
+                                        selectedVariants: {
+                                          ...addProductForm.selectedVariants,
+                                          [variant.name]: qty
+                                        }
+                                      });
+                                    }}
+                                    className="w-20 p-2 border rounded text-center"
+                                    placeholder="0"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                         <button
                           onClick={() => {
                             setAddingProductToOrder(null);
-                            setAddProductForm({ productSearch: '', selectedProduct: '', selectedVariant: '', quantity: 1, customPrice: '' });
+                            setAddProductForm({ productSearch: '', selectedProduct: '', selectedVariants: {}, quantity: 1, customPrice: '' });
                           }}
                           className="text-gray-600 hover:text-gray-800 text-sm"
                         >
