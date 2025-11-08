@@ -29,5 +29,8 @@
     "tailwindcss": "^3.4.17",
     "vercel": "^48.2.9",
     "vite": "^7.1.7"
+  },
+  "optionalDependencies": {
+    "@esbuild/darwin-arm64": "^0.25.12"
   }
 }

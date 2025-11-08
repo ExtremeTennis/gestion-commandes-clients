@@ -120,6 +120,11 @@ function App() {
   const [editingClientAddress, setEditingClientAddress] = useState(null);
   const [editClientAddressForm, setEditClientAddressForm] = useState({ label: '', address: '' });
 
+  // États pour la modale de sélection rapide des déclinaisons
+  const [showVariantsModal, setShowVariantsModal] = useState(false);
+  const [variantsModalProduct, setVariantsModalProduct] = useState(null);
+  const [variantsQuantities, setVariantsQuantities] = useState({});
+
   // Charger toutes les données au démarrage
   useEffect(() => {
     loadAllData();
@@ -751,7 +756,79 @@ function App() {
   };
 
   // ========== GESTION DES COMMANDES ==========
-  
+
+  // Ouvrir la modale de sélection rapide des déclinaisons
+  const openVariantsModal = (productId) => {
+    const product = products.find(p => p.id === parseInt(productId));
+    if (!product) return;
+
+    // Si le produit n'a pas de déclinaisons, ajouter directement
+    if (!product.variants || product.variants.length === 0) {
+      setSelectedProduct(productId);
+      return;
+    }
+
+    // Initialiser les quantités à 0 pour chaque déclinaison
+    const initialQuantities = {};
+    product.variants.forEach((variant, index) => {
+      initialQuantities[index] = 0;
+    });
+
+    setVariantsModalProduct(product);
+    setVariantsQuantities(initialQuantities);
+    setShowVariantsModal(true);
+  };
+
+  // Ajouter toutes les déclinaisons sélectionnées à la commande
+  const addVariantsToOrder = () => {
+    if (!variantsModalProduct) return;
+
+    let itemsAdded = 0;
+    const newItems = [];
+
+    Object.entries(variantsQuantities).forEach(([variantIndex, quantity]) => {
+      const qty = parseInt(quantity);
+      if (qty > 0) {
+        const variant = variantsModalProduct.variants[parseInt(variantIndex)];
+        const finalPrice = variantsModalProduct.price + (variant.priceAdjustment || 0);
+
+        const newItem = {
+          id: Date.now() + parseInt(variantIndex), // Assurer l'unicité des IDs
+          productId: variantsModalProduct.id,
+          name: variantsModalProduct.name,
+          variant: variant.name,
+          quantity: qty,
+          price: finalPrice
+        };
+
+        newItems.push(newItem);
+        itemsAdded++;
+      }
+    });
+
+    if (itemsAdded === 0) {
+      alert('Veuillez sélectionner au moins une quantité pour une déclinaison');
+      return;
+    }
+
+    setOrderItems([...orderItems, ...newItems]);
+
+    // Réinitialiser et fermer la modale
+    setShowVariantsModal(false);
+    setVariantsModalProduct(null);
+    setVariantsQuantities({});
+    setSelectedProduct('');
+    setProductSearch('');
+  };
+
+  // Mettre à jour la quantité d'une déclinaison dans la modale
+  const updateVariantQuantity = (variantIndex, value) => {
+    setVariantsQuantities({
+      ...variantsQuantities,
+      [variantIndex]: value
+    });
+  };
+
   const addItemToOrder = () => {
     if (!selectedProduct) {
       alert('Sélectionnez un produit');
@@ -759,32 +836,21 @@ function App() {
     }
 
     const product = products.find(p => p.id === parseInt(selectedProduct));
-    
-    // Si le produit a des déclinaisons et qu'aucune n'est sélectionnée
-    if (product.variants && product.variants.length > 0 && !selectedVariant) {
-      alert('Veuillez sélectionner une déclinaison');
+
+    // Si le produit a des déclinaisons, ouvrir la modale
+    if (product.variants && product.variants.length > 0) {
+      openVariantsModal(selectedProduct);
       return;
     }
 
+    // Produit sans déclinaison : ajout direct
     let finalPrice = customPrice ? parseFloat(customPrice) : product.price;
-    let variantName = '';
-
-    // Si une déclinaison est sélectionnée
-    if (selectedVariant && product.variants) {
-      const variant = product.variants.find(v => v.name === selectedVariant);
-      if (variant) {
-        variantName = variant.name;
-        if (!customPrice) {
-          finalPrice = product.price + (variant.priceAdjustment || 0);
-        }
-      }
-    }
 
     const newItem = {
       id: Date.now(),
       productId: product.id,
       name: product.name,
-      variant: variantName,
+      variant: '',
       quantity: parseInt(quantity),
       price: finalPrice
     };
@@ -1941,33 +2007,26 @@ function App() {
                     </div>
                   )}
                 </div>
-                
-                {/* Sélecteur de déclinaison */}
-                {hasProductVariants && (
-                  <select
-                    value={selectedVariant}
-                    onChange={(e) => {
-                      setSelectedVariant(e.target.value);
-                      const variant = currentProduct.variants.find(v => v.name === e.target.value);
-                      if (variant && !customPrice) {
-                        setCustomPrice((currentProduct.price + (variant.priceAdjustment || 0)).toString());
-                      }
-                    }}
-                    className="p-3 border rounded-lg"
-                  >
-                    <option value="">-- Déclinaison --</option>
-                    {currentProduct.variants.map((variant, idx) => (
-                      <option key={idx} value={variant.name}>
-                        {variant.name} {variant.priceAdjustment !== 0 && `(${variant.priceAdjustment > 0 ? '+' : ''}${variant.priceAdjustment.toFixed(2)} €)`}
-                      </option>
-                    ))}
-                  </select>
+
+                {/* Produit sans déclinaison : afficher quantité et prix */}
+                {selectedProduct && !hasProductVariants && (
+                  <>
+                    <input type="number" min="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="Quantité" className="p-3 border rounded-lg" />
+                    <input type="number" step="0.01" value={customPrice} onChange={(e) => setCustomPrice(e.target.value)} placeholder="Prix unitaire" className="p-3 border rounded-lg" />
+                  </>
                 )}
-                
-                <input type="number" min="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="Quantité" className="p-3 border rounded-lg" />
-                <input type="number" step="0.01" value={customPrice} onChange={(e) => setCustomPrice(e.target.value)} placeholder="Prix unitaire" className="p-3 border rounded-lg" />
+
+                {/* Produit avec déclinaisons : message informatif */}
+                {hasProductVariants && (
+                  <div className="md:col-span-2 flex items-center gap-2 p-3 bg-purple-50 rounded-lg border-2 border-purple-300">
+                    <span className="text-purple-700 font-semibold text-sm">
+                      Ce produit a {currentProduct.variants.length} déclinaison(s). Cliquez sur "Ajouter" pour sélectionner les quantités.
+                    </span>
+                  </div>
+                )}
+
                 <button onClick={addItemToOrder} disabled={!selectedProduct} className={`px-6 py-3 rounded-lg flex items-center justify-center gap-2 ${selectedProduct ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}>
-                  <Plus size={18} />Ajouter
+                  <Plus size={18} />{hasProductVariants ? 'Sélectionner' : 'Ajouter'}
                 </button>
               </div>
 
@@ -3428,6 +3487,128 @@ function App() {
           
           {activeMode === 'paiement' && renderPaymentTab()}
         </div>
+
+        {/* Modale de sélection rapide des déclinaisons */}
+        {showVariantsModal && variantsModalProduct && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+              {/* En-tête */}
+              <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="text-2xl font-bold">{variantsModalProduct.name}</h3>
+                    <p className="text-purple-100 mt-1">Prix de base: {variantsModalProduct.price.toFixed(2)} €</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowVariantsModal(false);
+                      setVariantsModalProduct(null);
+                      setVariantsQuantities({});
+                    }}
+                    className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-all"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Corps de la modale avec scroll */}
+              <div className="flex-1 overflow-y-auto p-6">
+                <p className="text-gray-600 mb-4 text-sm">
+                  Sélectionnez les quantités pour chaque déclinaison que vous souhaitez ajouter à la commande :
+                </p>
+
+                <div className="space-y-3">
+                  {variantsModalProduct.variants.map((variant, index) => {
+                    const variantPrice = variantsModalProduct.price + (variant.priceAdjustment || 0);
+                    return (
+                      <div
+                        key={index}
+                        className="flex items-center gap-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border-2 border-purple-200 hover:border-purple-400 transition-all"
+                      >
+                        <div className="flex-1">
+                          <p className="font-bold text-lg text-gray-800">{variant.name}</p>
+                          <p className="text-sm text-gray-600">
+                            Prix: {variantPrice.toFixed(2)} €
+                            {variant.priceAdjustment !== 0 && (
+                              <span className="ml-2 text-purple-600 font-semibold">
+                                ({variant.priceAdjustment > 0 ? '+' : ''}{variant.priceAdjustment.toFixed(2)} €)
+                              </span>
+                            )}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          <label className="text-sm font-semibold text-gray-600">Quantité:</label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={variantsQuantities[index] || 0}
+                            onChange={(e) => updateVariantQuantity(index, e.target.value)}
+                            className="w-24 p-2 border-2 border-purple-300 rounded-lg text-center font-bold text-lg focus:border-purple-500 focus:outline-none"
+                          />
+                        </div>
+
+                        {variantsQuantities[index] > 0 && (
+                          <div className="text-right min-w-[100px]">
+                            <p className="text-sm text-gray-500">Total</p>
+                            <p className="font-bold text-xl text-green-600">
+                              {(variantPrice * variantsQuantities[index]).toFixed(2)} €
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Total global */}
+                {Object.values(variantsQuantities).some(q => q > 0) && (
+                  <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border-2 border-green-300">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm text-gray-600">Total de la sélection</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {Object.entries(variantsQuantities).filter(([, qty]) => qty > 0).length} déclinaison(s) sélectionnée(s)
+                        </p>
+                      </div>
+                      <p className="text-3xl font-bold text-green-600">
+                        {Object.entries(variantsQuantities).reduce((total, [index, qty]) => {
+                          if (qty > 0) {
+                            const variant = variantsModalProduct.variants[parseInt(index)];
+                            const price = variantsModalProduct.price + (variant.priceAdjustment || 0);
+                            return total + (price * qty);
+                          }
+                          return total;
+                        }, 0).toFixed(2)} €
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Pied de page */}
+              <div className="p-6 bg-gray-50 border-t flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowVariantsModal(false);
+                    setVariantsModalProduct(null);
+                    setVariantsQuantities({});
+                  }}
+                  className="flex-1 bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 font-semibold transition-all"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={addVariantsToOrder}
+                  className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-blue-700 font-bold transition-all shadow-lg"
+                >
+                  Ajouter à la commande
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
