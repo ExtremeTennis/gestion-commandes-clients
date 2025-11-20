@@ -906,6 +906,41 @@ function App() {
     }
   };
 
+  // Fonction pour regrouper les variantes d'un même produit
+  const groupItemsByProduct = (items) => {
+    const grouped = {};
+
+    items.forEach(item => {
+      const key = `${item.productId}-${item.price}`;
+
+      if (!grouped[key]) {
+        grouped[key] = {
+          id: item.id,
+          productId: item.productId,
+          name: item.name,
+          price: item.price,
+          variants: [],
+          totalQuantity: 0,
+          totalPrice: 0,
+          picked: item.picked
+        };
+      }
+
+      grouped[key].variants.push({
+        id: item.id,
+        variant: item.variant || 'Standard',
+        quantity: item.quantity,
+        picked: item.picked
+      });
+      grouped[key].totalQuantity += item.quantity;
+      grouped[key].totalPrice += item.price * item.quantity;
+      // Un produit est "picked" si toutes ses variantes sont picked
+      grouped[key].picked = grouped[key].picked && item.picked;
+    });
+
+    return Object.values(grouped);
+  };
+
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       const updateData = { status: newStatus };
@@ -2119,54 +2154,37 @@ function App() {
                     </button>
                   </div>
                   <div className="space-y-2 mb-4">
-                    {order.items.map(item => (
+                    {groupItemsByProduct(order.items).map(groupedItem => (
                       <div
-                        key={item.id}
-                        onClick={() => !editingOrderItem && toggleItemPicked(order.id, item.id)}
-                        className={`flex items-center gap-3 p-3 rounded border transition-all ${item.picked
-                          ? 'bg-green-100 border-green-300 cursor-pointer hover:bg-green-200'
-                          : 'bg-blue-50 border-blue-200 cursor-pointer hover:bg-blue-100'
+                        key={groupedItem.id}
+                        className={`flex items-center gap-3 p-3 rounded border transition-all ${groupedItem.picked
+                          ? 'bg-green-100 border-green-300'
+                          : 'bg-blue-50 border-blue-200'
                           }`}
                       >
-                        {editingOrderItem === `${order.id}-${item.id}` ? (
-                          <div className="flex items-center gap-2 flex-1" onClick={(e) => e.stopPropagation()}>
-                            <span className="font-medium">{item.name}</span>
-                            <input type="number" min="1" defaultValue={item.quantity} onChange={(e) => setEditItemForm({ ...editItemForm, quantity: e.target.value })} className="w-20 p-1 border rounded" />
-                            <span>×</span>
-                            <input type="number" step="0.01" defaultValue={item.price} onChange={(e) => setEditItemForm({ ...editItemForm, price: e.target.value })} className="w-24 p-1 border rounded" />
-                            <button onClick={() => updateOrderItem(order.id, item.id)} className="bg-green-600 text-white p-1 rounded hover:bg-green-700">
-                              <Check size={16} />
-                            </button>
-                            <button onClick={() => setEditingOrderItem(null)} className="bg-gray-400 text-white p-1 rounded hover:bg-gray-500">
-                              <X size={16} />
-                            </button>
+                        <span className={`text-2xl font-bold min-w-[40px] ${groupedItem.picked ? 'text-green-600' : 'text-blue-600'}`}>{groupedItem.totalQuantity}</span>
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-800">
+                            {groupedItem.name}
+                            <span className="text-purple-600 font-semibold ml-2">
+                              {groupedItem.variants.map((v, idx) => (
+                                <span key={v.id}>
+                                  {v.variant !== 'Standard' ? v.variant : ''}{v.variant !== 'Standard' && '×'}{v.quantity}
+                                  {idx < groupedItem.variants.length - 1 ? ', ' : ''}
+                                </span>
+                              ))}
+                            </span>
                           </div>
-                        ) : (
-                          <>
-                            <span className={`text-2xl font-bold min-w-[40px] ${item.picked ? 'text-green-600' : 'text-blue-600'}`}>{item.quantity}</span>
-                            <div className="flex-1">
-                              <div className="font-medium text-gray-800">
-                                {item.name}
-                                {item.variant && <span className="text-purple-600 font-semibold"> ({item.variant})</span>}
-                              </div>
-                              {item.picked && (
-                                <p className="text-xs text-green-700 font-semibold mt-1">✓ Produit saisi</p>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                              <div className="text-right">
-                                <p className="text-sm text-gray-600">{item.price.toFixed(2)} € × {item.quantity}</p>
-                                <p className="font-bold text-lg">{(item.price * item.quantity).toFixed(2)} €</p>
-                              </div>
-                              <button onClick={() => { setEditingOrderItem(`${order.id}-${item.id}`); setEditItemForm({ quantity: item.quantity, price: item.price }); }} className="text-blue-600 hover:text-blue-800 p-1">
-                                <Edit size={18} />
-                              </button>
-                              <button onClick={() => removeItemFromExistingOrder(order.id, item.id)} className="text-red-600 hover:text-red-800 hover:bg-red-50 p-1 rounded">
-                                <Trash2 size={18} />
-                              </button>
-                            </div>
-                          </>
-                        )}
+                          {groupedItem.picked && (
+                            <p className="text-xs text-green-700 font-semibold mt-1">✓ Produit saisi</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="text-right">
+                            <p className="text-sm text-gray-600">{groupedItem.price.toFixed(2)} € × {groupedItem.totalQuantity}</p>
+                            <p className="font-bold text-lg">{groupedItem.totalPrice.toFixed(2)} €</p>
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -2467,44 +2485,28 @@ function App() {
                   </div>
 
                   <div className="space-y-2 mb-4">
-                    {order.items.map(item => (
-                      <div key={item.id} className="flex items-center gap-3 bg-orange-50 p-3 rounded border border-orange-200">
-                        {editingOrderItem === `${order.id}-${item.id}` ? (
-                          <div className="flex items-center gap-2 flex-1">
-                            <span className="font-medium">{item.name}</span>
-                            <input type="number" min="1" defaultValue={item.quantity} onChange={(e) => setEditItemForm({ ...editItemForm, quantity: e.target.value })} className="w-20 p-1 border rounded" />
-                            <span>×</span>
-                            <input type="number" step="0.01" defaultValue={item.price} onChange={(e) => setEditItemForm({ ...editItemForm, price: e.target.value })} className="w-24 p-1 border rounded" />
-                            <button onClick={() => updateOrderItem(order.id, item.id)} className="bg-green-600 text-white p-1 rounded hover:bg-green-700">
-                              <Check size={16} />
-                            </button>
-                            <button onClick={() => setEditingOrderItem(null)} className="bg-gray-400 text-white p-1 rounded hover:bg-gray-500">
-                              <X size={16} />
-                            </button>
+                    {groupItemsByProduct(order.items).map(groupedItem => (
+                      <div key={groupedItem.id} className="flex items-center gap-3 bg-orange-50 p-3 rounded border border-orange-200">
+                        <span className="text-2xl font-bold text-orange-600 min-w-[40px]">{groupedItem.totalQuantity}</span>
+                        <div className="flex-1">
+                          <span className="font-medium text-gray-800">
+                            {groupedItem.name}
+                            <span className="text-purple-600 font-semibold ml-2">
+                              {groupedItem.variants.map((v, idx) => (
+                                <span key={v.id}>
+                                  {v.variant !== 'Standard' ? v.variant : ''}{v.variant !== 'Standard' && '×'}{v.quantity}
+                                  {idx < groupedItem.variants.length - 1 ? ', ' : ''}
+                                </span>
+                              ))}
+                            </span>
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="text-right">
+                            <p className="text-sm text-gray-600">{groupedItem.price.toFixed(2)} € × {groupedItem.totalQuantity}</p>
+                            <p className="font-bold text-lg">{groupedItem.totalPrice.toFixed(2)} €</p>
                           </div>
-                        ) : (
-                          <>
-                            <span className="text-2xl font-bold text-orange-600 min-w-[40px]">{item.quantity}</span>
-                            <div className="flex-1">
-                              <span className="font-medium text-gray-800">
-                                {item.name}
-                                {item.variant && <span className="text-purple-600 font-semibold"> ({item.variant})</span>}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className="text-right">
-                                <p className="text-sm text-gray-600">{item.price.toFixed(2)} € × {item.quantity}</p>
-                                <p className="font-bold text-lg">{(item.price * item.quantity).toFixed(2)} €</p>
-                              </div>
-                              <button onClick={() => { setEditingOrderItem(`${order.id}-${item.id}`); setEditItemForm({ quantity: item.quantity, price: item.price }); }} className="text-blue-600 hover:text-blue-800 p-1">
-                                <Edit size={18} />
-                              </button>
-                              <button onClick={() => removeItemFromExistingOrder(order.id, item.id)} className="text-red-600 hover:text-red-800 hover:bg-red-50 p-1 rounded">
-                                <Trash2 size={18} />
-                              </button>
-                            </div>
-                          </>
-                        )}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -2616,10 +2618,12 @@ function App() {
     doc.text('Total', pageWidth - margin - 25, yPosition);
     yPosition += 8;
 
-    // Lignes du tableau
+    // Lignes du tableau (regroupées par produit)
     doc.setTextColor(0, 0, 0);
     doc.setFont('helvetica', 'normal');
-    order.items.forEach((item, index) => {
+    const groupedItems = groupItemsByProduct(order.items);
+
+    groupedItems.forEach((groupedItem, index) => {
       if (yPosition > 250) {
         doc.addPage();
         yPosition = 20;
@@ -2632,17 +2636,22 @@ function App() {
       }
 
       doc.setFont('helvetica', 'bold');
-      doc.text(item.quantity.toString(), margin + 5, yPosition);
+      doc.text(groupedItem.totalQuantity.toString(), margin + 5, yPosition);
       doc.setFont('helvetica', 'normal');
 
-      let productName = item.name;
-      if (item.variant) {
-        productName += ` (${item.variant})`;
+      // Nom du produit avec variantes
+      let productName = groupedItem.name;
+      const variantsText = groupedItem.variants
+        .map(v => v.variant !== 'Standard' ? `${v.variant}x${v.quantity}` : `${v.quantity}`)
+        .join(', ');
+      if (variantsText && groupedItem.variants.some(v => v.variant !== 'Standard')) {
+        productName += ` (${variantsText})`;
       }
+
       doc.text(productName, margin + 25, yPosition);
-      doc.text(`${item.price.toFixed(2)} €`, pageWidth - margin - 55, yPosition);
+      doc.text(`${groupedItem.price.toFixed(2)} €`, pageWidth - margin - 55, yPosition);
       doc.setFont('helvetica', 'bold');
-      doc.text(`${(item.price * item.quantity).toFixed(2)} €`, pageWidth - margin - 25, yPosition);
+      doc.text(`${groupedItem.totalPrice.toFixed(2)} €`, pageWidth - margin - 25, yPosition);
       yPosition += 8;
     });
 
@@ -2742,18 +2751,25 @@ function App() {
               </div>
             </div>
             <div className="space-y-2 mb-4">
-              {order.items.map(item => (
-                <div key={item.id} className="flex items-center gap-3 bg-green-50 p-3 rounded border border-green-200">
-                  <span className="text-2xl font-bold text-green-600 min-w-[40px]">{item.quantity}</span>
+              {groupItemsByProduct(order.items).map(groupedItem => (
+                <div key={groupedItem.id} className="flex items-center gap-3 bg-green-50 p-3 rounded border border-green-200">
+                  <span className="text-2xl font-bold text-green-600 min-w-[40px]">{groupedItem.totalQuantity}</span>
                   <div className="flex-1">
                     <span className="font-medium text-gray-800">
-                      {item.name}
-                      {item.variant && <span className="text-purple-600 font-semibold"> ({item.variant})</span>}
+                      {groupedItem.name}
+                      <span className="text-purple-600 font-semibold ml-2">
+                        {groupedItem.variants.map((v, idx) => (
+                          <span key={v.id}>
+                            {v.variant !== 'Standard' ? v.variant : ''}{v.variant !== 'Standard' && '×'}{v.quantity}
+                            {idx < groupedItem.variants.length - 1 ? ', ' : ''}
+                          </span>
+                        ))}
+                      </span>
                     </span>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-gray-600">{item.price.toFixed(2)} € × {item.quantity}</p>
-                    <p className="font-bold text-lg">{(item.price * item.quantity).toFixed(2)} €</p>
+                    <p className="text-sm text-gray-600">{groupedItem.price.toFixed(2)} € × {groupedItem.totalQuantity}</p>
+                    <p className="font-bold text-lg">{groupedItem.totalPrice.toFixed(2)} €</p>
                   </div>
                 </div>
               ))}
