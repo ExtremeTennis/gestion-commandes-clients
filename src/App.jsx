@@ -10,10 +10,10 @@ function App() {
   const [payments, setPayments] = useState([]);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [loading, setLoading] = useState(true);
-  
+
   // État pour gérer le mode (commande ou paiement)
   const [activeMode, setActiveMode] = useState('commande'); // 'commande' ou 'paiement'
-  
+
   // États pour le système de paiement indépendant
   const [paymentClients, setPaymentClients] = useState([]);
   const [paymentOrders, setPaymentOrders] = useState([]);
@@ -22,11 +22,11 @@ function App() {
   const [showNewPaymentClient, setShowNewPaymentClient] = useState(false);
   const [newPaymentClient, setNewPaymentClient] = useState({ name: '' });
   const [showNewPaymentOrder, setShowNewPaymentOrder] = useState(false);
-  const [newPaymentOrder, setNewPaymentOrder] = useState({ 
-    clientId: '', 
-    reference: '', 
-    orderNumber: '', 
-    amount: '', 
+  const [newPaymentOrder, setNewPaymentOrder] = useState({
+    clientId: '',
+    reference: '',
+    orderNumber: '',
+    amount: '',
     shipped: false,
     date: new Date().toISOString().split('T')[0]
   });
@@ -88,7 +88,7 @@ function App() {
   // États pour la fusion de commandes
   const [selectedPackedOrders, setSelectedPackedOrders] = useState({});
   const [selectedPendingOrders, setSelectedPendingOrders] = useState({});
-  
+
   // État pour l'autocomplétion produits
   const [productSearch, setProductSearch] = useState('');
   const [showProductSuggestions, setShowProductSuggestions] = useState(false);
@@ -155,7 +155,7 @@ function App() {
         .from('products')
         .select('*')
         .order('name');
-      
+
       if (error) throw error;
       setProducts(data || []);
     } catch (error) {
@@ -169,7 +169,7 @@ function App() {
         .from('clients')
         .select('*')
         .order('name');
-      
+
       if (error) throw error;
       setClients(data || []);
     } catch (error) {
@@ -183,7 +183,7 @@ function App() {
         .from('orders')
         .select('*')
         .order('date', { ascending: false });
-      
+
       if (error) throw error;
       setOrders(data || []);
     } catch (error) {
@@ -197,7 +197,7 @@ function App() {
         .from('payments')
         .select('*')
         .order('date', { ascending: false });
-      
+
       if (error) throw error;
       setPayments(data || []);
     } catch (error) {
@@ -206,14 +206,14 @@ function App() {
   };
 
   // ========== GESTION DU SYSTÈME DE PAIEMENT INDÉPENDANT ==========
-  
+
   const loadPaymentClients = async () => {
     try {
       const { data, error } = await supabase
         .from('payment_clients')
         .select('*')
         .order('name');
-      
+
       if (error) throw error;
       setPaymentClients(data || []);
     } catch (error) {
@@ -227,7 +227,7 @@ function App() {
         .from('payment_orders')
         .select('*')
         .order('date', { ascending: false });
-      
+
       if (error) throw error;
       setPaymentOrders(data || []);
     } catch (error) {
@@ -241,7 +241,7 @@ function App() {
         .from('payment_transactions')
         .select('*')
         .order('date', { ascending: false });
-      
+
       if (error) throw error;
       setPaymentTransactions(data || []);
     } catch (error) {
@@ -262,7 +262,7 @@ function App() {
         .select();
 
       if (error) throw error;
-      
+
       await loadPaymentClients();
       setNewPaymentClient({ name: '' });
       setShowNewPaymentClient(false);
@@ -291,13 +291,13 @@ function App() {
         }]);
 
       if (error) throw error;
-      
+
       await loadPaymentOrders();
-      setNewPaymentOrder({ 
-        clientId: '', 
-        reference: '', 
-        orderNumber: '', 
-        amount: '', 
+      setNewPaymentOrder({
+        clientId: '',
+        reference: '',
+        orderNumber: '',
+        amount: '',
         shipped: false,
         date: new Date().toISOString().split('T')[0]
       });
@@ -325,7 +325,7 @@ function App() {
         }]);
 
       if (error) throw error;
-      
+
       await loadPaymentTransactions();
       setNewPaymentTransaction({
         clientId: '',
@@ -350,7 +350,7 @@ function App() {
         .eq('id', id);
 
       if (error) throw error;
-      
+
       await Promise.all([
         loadPaymentClients(),
         loadPaymentOrders(),
@@ -372,7 +372,7 @@ function App() {
         .eq('id', id);
 
       if (error) throw error;
-      
+
       await loadPaymentOrders();
     } catch (error) {
       console.error('Erreur suppression commande:', error);
@@ -389,7 +389,7 @@ function App() {
         .eq('id', id);
 
       if (error) throw error;
-      
+
       await loadPaymentTransactions();
     } catch (error) {
       console.error('Erreur suppression paiement:', error);
@@ -511,7 +511,7 @@ function App() {
   };
 
   // ========== GESTION DES PRODUITS ==========
-  
+
   const addProduct = async () => {
     if (!newProduct.name || !newProduct.price) {
       alert('Veuillez remplir tous les champs');
@@ -540,7 +540,7 @@ function App() {
         .select();
 
       if (error) throw error;
-      
+
       await loadProducts();
       setNewProduct({ name: '', price: '' });
       setProductVariants([{ name: '', priceAdjustment: 0 }]);
@@ -577,7 +577,7 @@ function App() {
         .eq('id', id);
 
       if (error) throw error;
-      
+
       await loadProducts();
     } catch (error) {
       console.error('Erreur suppression produit:', error);
@@ -613,21 +613,21 @@ function App() {
         .select();
 
       if (error) throw error;
-      
+
       await loadProducts();
-      
+
       // Sélectionner automatiquement le produit créé
       const newProduct = data[0];
       setSelectedProduct(newProduct.id.toString());
       setProductSearch(newProduct.name);
       setCustomPrice(newProduct.price.toString());
-      
+
       // Réinitialiser le formulaire
       setQuickProduct({ name: '', price: '' });
       setQuickProductVariants([{ name: '', priceAdjustment: 0 }]);
       setQuickHasVariants(false);
       setShowQuickProductForm(false);
-      
+
       alert('Produit créé avec succès !');
     } catch (error) {
       console.error('Erreur ajout produit:', error);
@@ -651,7 +651,7 @@ function App() {
   };
 
   // ========== GESTION DES CLIENTS ==========
-  
+
   const addClient = async () => {
     if (!newClient.name || !newClient.email) {
       alert('Veuillez remplir tous les champs');
@@ -665,7 +665,7 @@ function App() {
         .select();
 
       if (error) throw error;
-      
+
       await loadClients();
       setNewClient({ name: '', email: '' });
       setShowNewClientForm(false);
@@ -686,7 +686,7 @@ function App() {
         .eq('id', clientId);
 
       if (error) throw error;
-      
+
       await loadClients();
     } catch (error) {
       console.error('Erreur ajout adresse:', error);
@@ -707,7 +707,7 @@ function App() {
         .eq('id', clientId);
 
       if (error) throw error;
-      
+
       await loadClients();
     } catch (error) {
       console.error('Erreur suppression adresse:', error);
@@ -717,7 +717,7 @@ function App() {
   const toggleFavoriteAddress = async (clientId, addressIndex) => {
     try {
       const client = clients.find(c => c.id === clientId);
-      const updatedAddresses = client.addresses.map((addr, idx) => 
+      const updatedAddresses = client.addresses.map((addr, idx) =>
         idx === addressIndex ? { ...addr, favorite: !addr.favorite } : addr
       );
 
@@ -727,7 +727,7 @@ function App() {
         .eq('id', clientId);
 
       if (error) throw error;
-      
+
       await loadClients();
     } catch (error) {
       console.error('Erreur modification favori:', error);
@@ -893,7 +893,7 @@ function App() {
         }]);
 
       if (error) throw error;
-      
+
       await loadOrders();
       setSelectedClient(null);
       setSelectedAddress(null);
@@ -918,9 +918,9 @@ function App() {
         .eq('id', orderId);
 
       if (error) throw error;
-      
+
       await loadOrders();
-      
+
       if (newStatus === 'packed') {
         setActiveTab('packed');
       } else if (newStatus === 'shipped') {
@@ -940,7 +940,7 @@ function App() {
         .eq('id', orderId);
 
       if (error) throw error;
-      
+
       await loadOrders();
     } catch (error) {
       console.error('Erreur mise à jour produit saisi:', error);
@@ -951,8 +951,8 @@ function App() {
   const toggleItemPicked = async (orderId, itemId) => {
     try {
       const order = orders.find(o => o.id === orderId);
-      const updatedItems = order.items.map(item => 
-        item.id === itemId 
+      const updatedItems = order.items.map(item =>
+        item.id === itemId
           ? { ...item, picked: !item.picked }
           : item
       );
@@ -963,7 +963,7 @@ function App() {
         .eq('id', orderId);
 
       if (error) throw error;
-      
+
       await loadOrders();
     } catch (error) {
       console.error('Erreur mise à jour produit saisi:', error);
@@ -972,26 +972,17 @@ function App() {
   };
 
   const shipOrderWithTracking = async () => {
-    if (!shippingForm.carrier) {
-      alert('Veuillez renseigner le transporteur');
-      return;
-    }
-
-    const validTrackingNumbers = shippingForm.trackingNumbers.filter(num => num.trim() !== '');
-    
     try {
       const { error } = await supabase
         .from('orders')
         .update({
           status: 'shipped',
-          shipped_date: new Date().toISOString(),
-          carrier: shippingForm.carrier,
-          tracking_numbers: validTrackingNumbers
+          shipped_date: new Date().toISOString()
         })
         .eq('id', shippingForm.orderId);
 
       if (error) throw error;
-      
+
       await loadOrders();
       setShowShippingForm(false);
       setShippingForm({ orderId: null, carrier: '', trackingNumbers: [''] });
@@ -1000,30 +991,6 @@ function App() {
       console.error('Erreur expédition commande:', error);
       alert('Erreur lors de l\'expédition');
     }
-  };
-
-  const addTrackingNumberField = () => {
-    setShippingForm({
-      ...shippingForm,
-      trackingNumbers: [...shippingForm.trackingNumbers, '']
-    });
-  };
-
-  const updateTrackingNumber = (index, value) => {
-    const newTrackingNumbers = [...shippingForm.trackingNumbers];
-    newTrackingNumbers[index] = value;
-    setShippingForm({
-      ...shippingForm,
-      trackingNumbers: newTrackingNumbers
-    });
-  };
-
-  const removeTrackingNumber = (index) => {
-    const newTrackingNumbers = shippingForm.trackingNumbers.filter((_, i) => i !== index);
-    setShippingForm({
-      ...shippingForm,
-      trackingNumbers: newTrackingNumbers.length > 0 ? newTrackingNumbers : ['']
-    });
   };
 
   const deleteOrder = async (orderId) => {
@@ -1036,7 +1003,7 @@ function App() {
         .eq('id', orderId);
 
       if (error) throw error;
-      
+
       await loadOrders();
     } catch (error) {
       console.error('Erreur suppression commande:', error);
@@ -1052,7 +1019,7 @@ function App() {
         .eq('id', orderId);
 
       if (error) throw error;
-      
+
       await loadOrders();
       setEditingAddress(null);
       setChangingPackedAddress(null);
@@ -1073,7 +1040,7 @@ function App() {
   const updateClientAddress = async (clientId, addressIndex, label, address) => {
     try {
       const client = clients.find(c => c.id === clientId);
-      const updatedAddresses = client.addresses.map((addr, idx) => 
+      const updatedAddresses = client.addresses.map((addr, idx) =>
         idx === addressIndex ? { ...addr, label, address } : addr
       );
 
@@ -1083,7 +1050,7 @@ function App() {
         .eq('id', clientId);
 
       if (error) throw error;
-      
+
       await loadClients();
       setEditingClientAddress(null);
     } catch (error) {
@@ -1112,7 +1079,7 @@ function App() {
         .eq('id', orderId);
 
       if (error) throw error;
-      
+
       await loadOrders();
     } catch (error) {
       console.error('Erreur suppression produit:', error);
@@ -1123,8 +1090,8 @@ function App() {
   const updateOrderItem = async (orderId, itemId) => {
     try {
       const order = orders.find(o => o.id === orderId);
-      const updatedItems = order.items.map(item => 
-        item.id === itemId 
+      const updatedItems = order.items.map(item =>
+        item.id === itemId
           ? { ...item, quantity: parseInt(editItemForm.quantity), price: parseFloat(editItemForm.price) }
           : item
       );
@@ -1137,7 +1104,7 @@ function App() {
         .eq('id', orderId);
 
       if (error) throw error;
-      
+
       await loadOrders();
       setEditingOrderItem(null);
     } catch (error) {
@@ -1153,7 +1120,7 @@ function App() {
     }
 
     const product = products.find(p => p.id === parseInt(addProductForm.selectedProduct));
-    
+
     if (product.variants && product.variants.length > 0 && !addProductForm.selectedVariant) {
       alert('Veuillez sélectionner une déclinaison');
       return;
@@ -1192,7 +1159,7 @@ function App() {
         .eq('id', orderId);
 
       if (error) throw error;
-      
+
       await loadOrders();
       setAddingProductToOrder(null);
       setAddProductForm({ productSearch: '', selectedProduct: '', selectedVariant: '', quantity: 1, customPrice: '' });
@@ -1203,7 +1170,7 @@ function App() {
   };
 
   // ========== GESTION DES PAIEMENTS ==========
-  
+
   const addPayment = async () => {
     if (!newPayment.clientId || !newPayment.amount || !newPayment.date) {
       alert('Veuillez remplir tous les champs obligatoires');
@@ -1221,7 +1188,7 @@ function App() {
         }]);
 
       if (error) throw error;
-      
+
       await loadPayments();
       setNewPayment({ clientId: '', amount: '', date: new Date().toISOString().split('T')[0], note: '' });
       setShowNewPaymentForm(false);
@@ -1241,7 +1208,7 @@ function App() {
         .eq('id', paymentId);
 
       if (error) throw error;
-      
+
       await loadPayments();
     } catch (error) {
       console.error('Erreur suppression paiement:', error);
@@ -1249,19 +1216,19 @@ function App() {
   };
 
   // ========== FUSION DES PRODUITS DANS UNE COMMANDE ==========
-  
+
   const mergeOrderProducts = async (orderId) => {
     if (!confirm('Fusionner les produits identiques dans cette commande ?')) return;
 
     try {
       const order = orders.find(o => o.id === orderId);
       const mergedItems = [];
-      
+
       order.items.forEach(item => {
-        const existingItem = mergedItems.find(i => 
+        const existingItem = mergedItems.find(i =>
           i.productId === item.productId && i.price === item.price
         );
-        
+
         if (existingItem) {
           existingItem.quantity += item.quantity;
         } else {
@@ -1277,7 +1244,7 @@ function App() {
         .eq('id', orderId);
 
       if (error) throw error;
-      
+
       await loadOrders();
       alert('Produits fusionnés avec succès !');
     } catch (error) {
@@ -1287,7 +1254,7 @@ function App() {
   };
 
   // ========== FUSION DES COMMANDES EN ATTENTE ==========
-  
+
   const togglePendingOrderSelection = (orderId) => {
     setSelectedPendingOrders({
       ...selectedPendingOrders,
@@ -1302,14 +1269,14 @@ function App() {
   const canMergePendingOrders = () => {
     const selected = getSelectedPendingOrdersArray();
     if (selected.length < 2) return false;
-    
+
     const firstClientId = selected[0].client_id;
     return selected.every(order => order.client_id === firstClientId);
   };
 
   const mergePendingOrders = async () => {
     const selected = getSelectedPendingOrdersArray();
-    
+
     if (selected.length < 2) {
       alert('Sélectionnez au moins 2 commandes à fusionner');
       return;
@@ -1324,7 +1291,7 @@ function App() {
 
     try {
       const firstOrder = selected[0];
-      
+
       const mergedItems = [];
       selected.forEach(order => {
         order.items.forEach(item => {
@@ -1372,7 +1339,7 @@ function App() {
   };
 
   // ========== FUSION DES COMMANDES EN CARTON ==========
-  
+
   const togglePackedOrderSelection = (orderId) => {
     setSelectedPackedOrders({
       ...selectedPackedOrders,
@@ -1387,14 +1354,14 @@ function App() {
   const canMergeOrders = () => {
     const selected = getSelectedPackedOrdersArray();
     if (selected.length < 2) return false;
-    
+
     const firstClientId = selected[0].client_id;
     return selected.every(order => order.client_id === firstClientId);
   };
 
   const mergePackedOrders = async () => {
     const selected = getSelectedPackedOrdersArray();
-    
+
     if (selected.length < 2) {
       alert('Sélectionnez au moins 2 commandes à fusionner');
       return;
@@ -1409,7 +1376,7 @@ function App() {
 
     try {
       const firstOrder = selected[0];
-      
+
       const mergedItems = [];
       selected.forEach(order => {
         order.items.forEach(item => {
@@ -1457,11 +1424,11 @@ function App() {
   };
 
   // ========== STATISTIQUES DASHBOARD ==========
-  
+
   const getFilteredOrders = () => {
     let filtered = [...orders];
     const now = new Date();
-    
+
     if (dashboardPeriod === 'year') {
       const startOfYear = new Date(now.getFullYear(), 0, 1);
       filtered = filtered.filter(o => new Date(o.date) >= startOfYear);
@@ -1474,18 +1441,18 @@ function App() {
         return orderDate >= start && orderDate <= end;
       });
     }
-    
+
     return filtered;
   };
 
   const getDashboardStats = () => {
     const filtered = getFilteredOrders();
     const shipped = filtered.filter(o => o.status === 'shipped');
-    
+
     const totalRevenue = shipped.reduce((sum, o) => sum + parseFloat(o.total), 0);
     const totalOrders = shipped.length;
     const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-    
+
     // Statistiques année précédente
     const now = new Date();
     const lastYearStart = new Date(now.getFullYear() - 1, 0, 1);
@@ -1495,7 +1462,7 @@ function App() {
       return o.status === 'shipped' && orderDate >= lastYearStart && orderDate <= lastYearEnd;
     });
     const lastYearRevenue = lastYearOrders.reduce((sum, o) => sum + parseFloat(o.total), 0);
-    
+
     // Produits les plus vendus
     const productSales = {};
     shipped.forEach(order => {
@@ -1507,12 +1474,12 @@ function App() {
         productSales[item.name].revenue += item.quantity * item.price;
       });
     });
-    
+
     const topProducts = Object.entries(productSales)
       .map(([name, data]) => ({ name, ...data }))
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 5);
-    
+
     // Ventes par mois (12 derniers mois)
     const monthlyData = [];
     for (let i = 11; i >= 0; i--) {
@@ -1520,21 +1487,21 @@ function App() {
       date.setMonth(date.getMonth() - i);
       const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
       const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59);
-      
+
       const monthOrders = orders.filter(o => {
         const orderDate = new Date(o.date);
         return o.status === 'shipped' && orderDate >= monthStart && orderDate <= monthEnd;
       });
-      
+
       const monthRevenue = monthOrders.reduce((sum, o) => sum + parseFloat(o.total), 0);
-      
+
       monthlyData.push({
         month: date.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' }),
         revenue: monthRevenue,
         orders: monthOrders.length
       });
     }
-    
+
     return {
       totalRevenue,
       totalOrders,
@@ -1548,7 +1515,7 @@ function App() {
   };
 
   // ========== UTILITAIRES ==========
-  
+
   const sendShippingEmail = (order) => {
     const subject = `Commande #${order.id} expédiée`;
     const body = `Bonjour,\n\nVotre commande #${order.id} a été expédiée.\n\nCordialement`;
@@ -1583,7 +1550,7 @@ function App() {
 
   const renderDashboardTab = () => {
     const stats = getDashboardStats();
-    const revenueGrowth = stats.lastYearRevenue > 0 
+    const revenueGrowth = stats.lastYearRevenue > 0
       ? ((stats.totalRevenue - stats.lastYearRevenue) / stats.lastYearRevenue * 100).toFixed(1)
       : 0;
 
@@ -1591,10 +1558,10 @@ function App() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold text-blue-600">📊 Dashboard</h2>
-          
+
           <div className="flex gap-3 items-center">
-            <select 
-              value={dashboardPeriod} 
+            <select
+              value={dashboardPeriod}
               onChange={(e) => setDashboardPeriod(e.target.value)}
               className="p-2 border rounded-lg"
             >
@@ -1602,18 +1569,18 @@ function App() {
               <option value="year">Cette année</option>
               <option value="custom">Période personnalisée</option>
             </select>
-            
+
             {dashboardPeriod === 'custom' && (
               <>
-                <input 
-                  type="date" 
+                <input
+                  type="date"
                   value={customStartDate}
                   onChange={(e) => setCustomStartDate(e.target.value)}
                   className="p-2 border rounded-lg"
                 />
                 <span>→</span>
-                <input 
-                  type="date" 
+                <input
+                  type="date"
                   value={customEndDate}
                   onChange={(e) => setCustomEndDate(e.target.value)}
                   className="p-2 border rounded-lg"
@@ -1673,12 +1640,12 @@ function App() {
             {stats.monthlyData.map((month, idx) => {
               const maxRevenue = Math.max(...stats.monthlyData.map(m => m.revenue));
               const widthPercent = maxRevenue > 0 ? (month.revenue / maxRevenue * 100) : 0;
-              
+
               return (
                 <div key={idx} className="flex items-center gap-3">
                   <div className="w-20 text-sm text-gray-600 font-medium">{month.month}</div>
                   <div className="flex-1 bg-gray-100 rounded-full h-8 relative overflow-hidden">
-                    <div 
+                    <div
                       className="bg-gradient-to-r from-blue-500 to-blue-600 h-full rounded-full transition-all duration-500 flex items-center justify-end pr-3"
                       style={{ width: `${widthPercent}%` }}
                     >
@@ -1741,7 +1708,7 @@ function App() {
   };
 
   const renderNewOrderTab = () => {
-    const filteredProducts = products.filter(p => 
+    const filteredProducts = products.filter(p =>
       p.name.toLowerCase().includes(productSearch.toLowerCase())
     );
 
@@ -1760,7 +1727,7 @@ function App() {
     return (
       <div className="space-y-6">
         <h2 className="text-2xl font-bold text-blue-600">➕ Nouvelle Commande</h2>
-        
+
         {/* Adresses favorites */}
         {favoriteAddresses.length > 0 && (
           <div className="bg-yellow-50 p-4 rounded-lg border-2 border-yellow-300">
@@ -1795,12 +1762,12 @@ function App() {
         {/* Sélection du client ET adresse sur la même ligne */}
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-bold mb-4">1️⃣ Sélectionner un client et une adresse</h3>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-semibold mb-2">Client</label>
-              <select 
-                value={selectedClient || ''} 
+              <select
+                value={selectedClient || ''}
                 onChange={(e) => { setSelectedClient(parseInt(e.target.value)); setSelectedAddress(null); }}
                 className="w-full p-3 border rounded-lg"
               >
@@ -1812,11 +1779,11 @@ function App() {
               <button onClick={() => setShowNewClientForm(!showNewClientForm)} className="mt-3 text-blue-600 hover:text-blue-800 flex items-center gap-2">
                 <Plus size={18} />Nouveau client
               </button>
-              
+
               {showNewClientForm && (
                 <div className="mt-4 p-4 bg-blue-50 rounded-lg space-y-3">
-                  <input type="text" placeholder="Nom du client" value={newClient.name} onChange={(e) => setNewClient({...newClient, name: e.target.value})} className="w-full p-2 border rounded" />
-                  <input type="email" placeholder="Email" value={newClient.email} onChange={(e) => setNewClient({...newClient, email: e.target.value})} className="w-full p-2 border rounded" />
+                  <input type="text" placeholder="Nom du client" value={newClient.name} onChange={(e) => setNewClient({ ...newClient, name: e.target.value })} className="w-full p-2 border rounded" />
+                  <input type="email" placeholder="Email" value={newClient.email} onChange={(e) => setNewClient({ ...newClient, email: e.target.value })} className="w-full p-2 border rounded" />
                   <button onClick={addClient} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Ajouter</button>
                 </div>
               )}
@@ -1853,7 +1820,7 @@ function App() {
         {selectedClient && selectedAddress !== null && (
           <div className="bg-white p-6 rounded-lg shadow-md">
             <h3 className="text-lg font-bold mb-4">2️⃣ Ajouter des produits</h3>
-            
+
             {/* Bouton pour créer un nouveau produit */}
             {!showQuickProductForm && (
               <button
@@ -1887,7 +1854,7 @@ function App() {
                     type="text"
                     placeholder="Nom du produit"
                     value={quickProduct.name}
-                    onChange={(e) => setQuickProduct({...quickProduct, name: e.target.value})}
+                    onChange={(e) => setQuickProduct({ ...quickProduct, name: e.target.value })}
                     className="w-full p-3 border rounded-lg"
                   />
                   <input
@@ -1895,7 +1862,7 @@ function App() {
                     step="0.01"
                     placeholder="Prix de base"
                     value={quickProduct.price}
-                    onChange={(e) => setQuickProduct({...quickProduct, price: e.target.value})}
+                    onChange={(e) => setQuickProduct({ ...quickProduct, price: e.target.value })}
                     className="w-full p-3 border rounded-lg"
                   />
 
@@ -2086,7 +2053,7 @@ function App() {
       <div>
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-blue-600">📦 Commandes en attente</h2>
-          
+
           {selectedCount > 0 && (
             <div className="flex items-center gap-4">
               <span className="text-sm font-semibold text-gray-700">
@@ -2096,11 +2063,10 @@ function App() {
                 <button
                   onClick={mergePendingOrders}
                   disabled={!canMerge}
-                  className={`px-6 py-2 rounded-lg font-bold flex items-center gap-2 ${
-                    canMerge
-                      ? 'bg-purple-600 text-white hover:bg-purple-700'
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  }`}
+                  className={`px-6 py-2 rounded-lg font-bold flex items-center gap-2 ${canMerge
+                    ? 'bg-purple-600 text-white hover:bg-purple-700'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
                 >
                   🔀 Fusionner les commandes
                 </button>
@@ -2118,13 +2084,12 @@ function App() {
           const showMergeHint = clientOrders.length > 1;
 
           return (
-            <div 
-              key={order.id} 
-              className={`p-6 rounded-lg shadow-md border-l-4 mb-4 transition-all ${
-                isSelected 
-                  ? 'border-purple-500 bg-purple-50' 
-                  : 'bg-white border-blue-500'
-              }`}
+            <div
+              key={order.id}
+              className={`p-6 rounded-lg shadow-md border-l-4 mb-4 transition-all ${isSelected
+                ? 'border-purple-500 bg-purple-50'
+                : 'bg-white border-blue-500'
+                }`}
             >
               <div className="flex items-start gap-4">
                 <div className="flex items-center pt-1">
@@ -2154,21 +2119,20 @@ function App() {
                   </div>
                   <div className="space-y-2 mb-4">
                     {order.items.map(item => (
-                      <div 
-                        key={item.id} 
+                      <div
+                        key={item.id}
                         onClick={() => !editingOrderItem && toggleItemPicked(order.id, item.id)}
-                        className={`flex items-center gap-3 p-3 rounded border transition-all ${
-                          item.picked 
-                            ? 'bg-green-100 border-green-300 cursor-pointer hover:bg-green-200' 
-                            : 'bg-blue-50 border-blue-200 cursor-pointer hover:bg-blue-100'
-                        }`}
+                        className={`flex items-center gap-3 p-3 rounded border transition-all ${item.picked
+                          ? 'bg-green-100 border-green-300 cursor-pointer hover:bg-green-200'
+                          : 'bg-blue-50 border-blue-200 cursor-pointer hover:bg-blue-100'
+                          }`}
                       >
                         {editingOrderItem === `${order.id}-${item.id}` ? (
                           <div className="flex items-center gap-2 flex-1" onClick={(e) => e.stopPropagation()}>
                             <span className="font-medium">{item.name}</span>
-                            <input type="number" min="1" defaultValue={item.quantity} onChange={(e) => setEditItemForm({...editItemForm, quantity: e.target.value})} className="w-20 p-1 border rounded" />
+                            <input type="number" min="1" defaultValue={item.quantity} onChange={(e) => setEditItemForm({ ...editItemForm, quantity: e.target.value })} className="w-20 p-1 border rounded" />
                             <span>×</span>
-                            <input type="number" step="0.01" defaultValue={item.price} onChange={(e) => setEditItemForm({...editItemForm, price: e.target.value})} className="w-24 p-1 border rounded" />
+                            <input type="number" step="0.01" defaultValue={item.price} onChange={(e) => setEditItemForm({ ...editItemForm, price: e.target.value })} className="w-24 p-1 border rounded" />
                             <button onClick={() => updateOrderItem(order.id, item.id)} className="bg-green-600 text-white p-1 rounded hover:bg-green-700">
                               <Check size={16} />
                             </button>
@@ -2221,10 +2185,10 @@ function App() {
                               type="text"
                               value={addProductForm.productSearch}
                               onChange={(e) => {
-                                const filteredProducts = products.filter(p => 
+                                const filteredProducts = products.filter(p =>
                                   p.name.toLowerCase().includes(e.target.value.toLowerCase())
                                 );
-                                setAddProductForm({...addProductForm, productSearch: e.target.value, selectedProduct: ''});
+                                setAddProductForm({ ...addProductForm, productSearch: e.target.value, selectedProduct: '' });
                                 setShowAddProductSuggestions(true);
                               }}
                               onFocus={() => setShowAddProductSuggestions(true)}
@@ -2258,7 +2222,7 @@ function App() {
                               </div>
                             )}
                           </div>
-                          
+
                           {addProductForm.selectedProduct && products.find(p => p.id === parseInt(addProductForm.selectedProduct))?.variants?.length > 0 && (
                             <select
                               value={addProductForm.selectedVariant}
@@ -2281,12 +2245,12 @@ function App() {
                               ))}
                             </select>
                           )}
-                          
+
                           <input
                             type="number"
                             min="1"
                             value={addProductForm.quantity}
-                            onChange={(e) => setAddProductForm({...addProductForm, quantity: e.target.value})}
+                            onChange={(e) => setAddProductForm({ ...addProductForm, quantity: e.target.value })}
                             placeholder="Quantité"
                             className="p-2 border rounded-lg"
                           />
@@ -2294,18 +2258,17 @@ function App() {
                             type="number"
                             step="0.01"
                             value={addProductForm.customPrice}
-                            onChange={(e) => setAddProductForm({...addProductForm, customPrice: e.target.value})}
+                            onChange={(e) => setAddProductForm({ ...addProductForm, customPrice: e.target.value })}
                             placeholder="Prix"
                             className="p-2 border rounded-lg"
                           />
                           <button
                             onClick={() => addProductToExistingOrder(order.id)}
                             disabled={!addProductForm.selectedProduct}
-                            className={`px-4 py-2 rounded-lg flex items-center justify-center gap-2 ${
-                              addProductForm.selectedProduct
-                                ? 'bg-green-600 text-white hover:bg-green-700'
-                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                            }`}
+                            className={`px-4 py-2 rounded-lg flex items-center justify-center gap-2 ${addProductForm.selectedProduct
+                              ? 'bg-green-600 text-white hover:bg-green-700'
+                              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                              }`}
                           >
                             <Plus size={16} />Ajouter
                           </button>
@@ -2333,13 +2296,13 @@ function App() {
                   <button onClick={() => updateOrderStatus(order.id, 'packed')} className="w-full bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 flex items-center justify-center gap-2 font-bold">
                     <Package size={20} />Mettre en carton
                   </button>
-                  {order.items.some((item, idx) => 
+                  {order.items.some((item, idx) =>
                     order.items.findIndex(i => i.productId === item.productId && i.price === item.price) !== idx
                   ) && (
-                    <button onClick={() => mergeOrderProducts(order.id)} className="w-full mt-2 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 flex items-center justify-center gap-2 font-bold">
-                      🔀 Fusionner les produits identiques
-                    </button>
-                  )}
+                      <button onClick={() => mergeOrderProducts(order.id)} className="w-full mt-2 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 flex items-center justify-center gap-2 font-bold">
+                        🔀 Fusionner les produits identiques
+                      </button>
+                    )}
                 </div>
               </div>
             </div>
@@ -2367,7 +2330,7 @@ function App() {
       <div>
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-orange-600">📦 Commandes mises en carton</h2>
-          
+
           {selectedCount > 0 && (
             <div className="flex items-center gap-4">
               <span className="text-sm font-semibold text-gray-700">
@@ -2377,11 +2340,10 @@ function App() {
                 <button
                   onClick={mergePackedOrders}
                   disabled={!canMerge}
-                  className={`px-6 py-2 rounded-lg font-bold flex items-center gap-2 ${
-                    canMerge
-                      ? 'bg-purple-600 text-white hover:bg-purple-700'
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  }`}
+                  className={`px-6 py-2 rounded-lg font-bold flex items-center gap-2 ${canMerge
+                    ? 'bg-purple-600 text-white hover:bg-purple-700'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
                 >
                   🔀 Fusionner les commandes
                 </button>
@@ -2393,62 +2355,18 @@ function App() {
           )}
         </div>
 
-        {/* Formulaire d'expédition avec transporteur et suivi */}
+        {/* Modale de confirmation d'expédition */}
         {showShippingForm && (
-          <div className="bg-white p-6 rounded-lg shadow-md mb-6 border-2 border-green-500">
-            <h3 className="text-lg font-bold mb-4 text-green-600">📦 Expédition de la commande #{shippingForm.orderId}</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold mb-2">Transporteur *</label>
-                <input
-                  type="text"
-                  value={shippingForm.carrier}
-                  onChange={(e) => setShippingForm({...shippingForm, carrier: e.target.value})}
-                  placeholder="Ex: Colissimo, Chronopost, UPS..."
-                  className="w-full p-3 border rounded-lg"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-semibold mb-2">Numéros de suivi</label>
-                <div className="space-y-2">
-                  {shippingForm.trackingNumbers.map((tracking, index) => (
-                    <div key={index} className="flex gap-2">
-                      <input
-                        type="text"
-                        value={tracking}
-                        onChange={(e) => updateTrackingNumber(index, e.target.value)}
-                        placeholder={`Numéro de suivi ${index + 1}`}
-                        className="flex-1 p-3 border rounded-lg"
-                      />
-                      {shippingForm.trackingNumbers.length > 1 && (
-                        <button
-                          onClick={() => removeTrackingNumber(index)}
-                          className="bg-red-100 text-red-600 px-3 py-2 rounded-lg hover:bg-red-200"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      )}
-                      {index === shippingForm.trackingNumbers.length - 1 && (
-                        <button
-                          onClick={addTrackingNumberField}
-                          className="bg-blue-100 text-blue-600 px-3 py-2 rounded-lg hover:bg-blue-200 flex items-center gap-1"
-                        >
-                          <Plus size={18} />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <p className="text-xs text-gray-500 mt-2">💡 Cliquez sur + pour ajouter un autre colis</p>
-              </div>
-
-              <div className="flex gap-3 pt-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+              <h3 className="text-lg font-bold mb-4 text-green-600">📦 Expédition de la commande #{shippingForm.orderId}</h3>
+              <p className="text-gray-700 mb-6">Voulez-vous confirmer l'expédition de cette commande ?</p>
+              <div className="flex gap-3">
                 <button
                   onClick={shipOrderWithTracking}
                   className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-bold flex items-center justify-center gap-2"
                 >
-                  <Send size={20} />Valider l'expédition
+                  <Send size={20} />Confirmer l'expédition
                 </button>
                 <button
                   onClick={() => {
@@ -2471,13 +2389,12 @@ function App() {
           const client = clients.find(c => c.id === order.client_id);
 
           return (
-            <div 
-              key={order.id} 
-              className={`bg-white p-6 rounded-lg shadow-md border-l-4 mb-4 transition-all ${
-                isSelected 
-                  ? 'border-purple-500 bg-purple-50' 
-                  : 'border-orange-500'
-              }`}
+            <div
+              key={order.id}
+              className={`bg-white p-6 rounded-lg shadow-md border-l-4 mb-4 transition-all ${isSelected
+                ? 'border-purple-500 bg-purple-50'
+                : 'border-orange-500'
+                }`}
             >
               <div className="flex items-start gap-4">
                 <div className="flex items-center pt-1">
@@ -2499,7 +2416,7 @@ function App() {
                           💡 {clientOrders.length} commandes en carton pour ce client
                         </p>
                       )}
-                      
+
                       {/* Adresse avec possibilité de changer */}
                       {changingPackedAddress === order.id ? (
                         <div className="mt-2 space-y-2">
@@ -2535,7 +2452,7 @@ function App() {
                           </button>
                         </div>
                       )}
-                      
+
                       <span className="inline-block mt-2 px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-semibold">📦 Mis en carton</span>
                     </div>
                     <div className="flex gap-2">
@@ -2554,9 +2471,9 @@ function App() {
                         {editingOrderItem === `${order.id}-${item.id}` ? (
                           <div className="flex items-center gap-2 flex-1">
                             <span className="font-medium">{item.name}</span>
-                            <input type="number" min="1" defaultValue={item.quantity} onChange={(e) => setEditItemForm({...editItemForm, quantity: e.target.value})} className="w-20 p-1 border rounded" />
+                            <input type="number" min="1" defaultValue={item.quantity} onChange={(e) => setEditItemForm({ ...editItemForm, quantity: e.target.value })} className="w-20 p-1 border rounded" />
                             <span>×</span>
-                            <input type="number" step="0.01" defaultValue={item.price} onChange={(e) => setEditItemForm({...editItemForm, price: e.target.value})} className="w-24 p-1 border rounded" />
+                            <input type="number" step="0.01" defaultValue={item.price} onChange={(e) => setEditItemForm({ ...editItemForm, price: e.target.value })} className="w-24 p-1 border rounded" />
                             <button onClick={() => updateOrderItem(order.id, item.id)} className="bg-green-600 text-white p-1 rounded hover:bg-green-700">
                               <Check size={16} />
                             </button>
@@ -2605,13 +2522,13 @@ function App() {
                   >
                     <Send size={20} />Expédier la commande
                   </button>
-                  {order.items.some((item, idx) => 
+                  {order.items.some((item, idx) =>
                     order.items.findIndex(i => i.productId === item.productId && i.price === item.price) !== idx
                   ) && (
-                    <button onClick={() => mergeOrderProducts(order.id)} className="w-full mt-2 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 flex items-center justify-center gap-2 font-bold">
-                      🔀 Fusionner les produits identiques
-                    </button>
-                  )}
+                      <button onClick={() => mergeOrderProducts(order.id)} className="w-full mt-2 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 flex items-center justify-center gap-2 font-bold">
+                        🔀 Fusionner les produits identiques
+                      </button>
+                    )}
                 </div>
               </div>
             </div>
@@ -2636,7 +2553,7 @@ function App() {
                   <p className="text-sm font-semibold">{order.address_label}</p>
                   <p className="text-sm text-gray-700 whitespace-pre-line">{order.client_address}</p>
                 </div>
-                
+
                 {/* Infos d'expédition */}
                 {order.carrier && (
                   <div className="mt-3 bg-green-50 p-3 rounded border border-green-200">
@@ -2655,7 +2572,7 @@ function App() {
                     )}
                   </div>
                 )}
-                
+
                 <p className="text-sm text-gray-600 mt-2">📅 Commandé : {new Date(order.date).toLocaleDateString('fr-FR')}</p>
                 <p className="text-sm text-green-600 font-semibold">🚚 Expédié : {new Date(order.shipped_date).toLocaleDateString('fr-FR')}</p>
                 <span className="inline-block mt-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">✅ Expédié</span>
@@ -2699,11 +2616,11 @@ function App() {
         <button onClick={() => setShowNewClientForm(!showNewClientForm)} className="mb-4 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center gap-2">
           <Plus size={20} />Nouveau client
         </button>
-        
+
         {showNewClientForm && (
           <div className="bg-white p-6 rounded-lg shadow-md mb-6 space-y-4">
-            <input type="text" placeholder="Nom" value={newClient.name} onChange={(e) => setNewClient({...newClient, name: e.target.value})} className="w-full p-3 border rounded-lg" />
-            <input type="email" placeholder="Email" value={newClient.email} onChange={(e) => setNewClient({...newClient, email: e.target.value})} className="w-full p-3 border rounded-lg" />
+            <input type="text" placeholder="Nom" value={newClient.name} onChange={(e) => setNewClient({ ...newClient, name: e.target.value })} className="w-full p-3 border rounded-lg" />
+            <input type="email" placeholder="Email" value={newClient.email} onChange={(e) => setNewClient({ ...newClient, email: e.target.value })} className="w-full p-3 border rounded-lg" />
             <button onClick={addClient} className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-bold">Ajouter le client</button>
           </div>
         )}
@@ -2712,7 +2629,7 @@ function App() {
           {clients.map(client => {
             const clientOrders = orders.filter(o => o.client_id === client.id);
             const balance = getClientBalance(client.id);
-            
+
             return (
               <div key={client.id} className="bg-white p-6 rounded-lg shadow-md">
                 <div className="flex justify-between items-start mb-4">
@@ -2737,13 +2654,13 @@ function App() {
                               <input
                                 type="text"
                                 value={editClientAddressForm.label}
-                                onChange={(e) => setEditClientAddressForm({...editClientAddressForm, label: e.target.value})}
+                                onChange={(e) => setEditClientAddressForm({ ...editClientAddressForm, label: e.target.value })}
                                 className="w-full p-2 border rounded"
                                 placeholder="Label"
                               />
                               <textarea
                                 value={editClientAddressForm.address}
-                                onChange={(e) => setEditClientAddressForm({...editClientAddressForm, address: e.target.value})}
+                                onChange={(e) => setEditClientAddressForm({ ...editClientAddressForm, address: e.target.value })}
                                 className="w-full p-2 border rounded"
                                 rows="3"
                                 placeholder="Adresse"
@@ -2766,12 +2683,12 @@ function App() {
                           ) : (
                             <div className="flex justify-between items-start">
                               <div className="flex items-start gap-2 flex-1">
-                                <button 
+                                <button
                                   onClick={() => toggleFavoriteAddress(client.id, index)}
                                   className="mt-1"
                                 >
-                                  <Star 
-                                    size={18} 
+                                  <Star
+                                    size={18}
                                     className={addr.favorite ? 'text-yellow-500' : 'text-gray-300'}
                                     fill={addr.favorite ? 'currentColor' : 'none'}
                                   />
@@ -2823,22 +2740,22 @@ function App() {
     return (
       <div>
         <h2 className="text-2xl font-bold mb-6 text-blue-600">💰 Gestion des soldes</h2>
-        
+
         <button onClick={() => setShowNewPaymentForm(!showNewPaymentForm)} className="mb-4 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 flex items-center gap-2">
           <Plus size={20} />Enregistrer un paiement
         </button>
 
         {showNewPaymentForm && (
           <div className="bg-white p-6 rounded-lg shadow-md mb-6 space-y-4">
-            <select value={newPayment.clientId} onChange={(e) => setNewPayment({...newPayment, clientId: e.target.value})} className="w-full p-3 border rounded-lg">
+            <select value={newPayment.clientId} onChange={(e) => setNewPayment({ ...newPayment, clientId: e.target.value })} className="w-full p-3 border rounded-lg">
               <option value="">-- Sélectionner un client --</option>
               {clients.map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
-            <input type="number" step="0.01" placeholder="Montant" value={newPayment.amount} onChange={(e) => setNewPayment({...newPayment, amount: e.target.value})} className="w-full p-3 border rounded-lg" />
-            <input type="date" value={newPayment.date} onChange={(e) => setNewPayment({...newPayment, date: e.target.value})} className="w-full p-3 border rounded-lg" />
-            <input type="text" placeholder="Note (optionnel)" value={newPayment.note} onChange={(e) => setNewPayment({...newPayment, note: e.target.value})} className="w-full p-3 border rounded-lg" />
+            <input type="number" step="0.01" placeholder="Montant" value={newPayment.amount} onChange={(e) => setNewPayment({ ...newPayment, amount: e.target.value })} className="w-full p-3 border rounded-lg" />
+            <input type="date" value={newPayment.date} onChange={(e) => setNewPayment({ ...newPayment, date: e.target.value })} className="w-full p-3 border rounded-lg" />
+            <input type="text" placeholder="Note (optionnel)" value={newPayment.note} onChange={(e) => setNewPayment({ ...newPayment, note: e.target.value })} className="w-full p-3 border rounded-lg" />
             <button onClick={addPayment} className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-bold">Enregistrer</button>
           </div>
         )}
@@ -2854,7 +2771,7 @@ function App() {
             return (
               <div key={client.id} className="bg-white p-6 rounded-lg shadow-md">
                 <h3 className="text-xl font-bold mb-4">{client.name}</h3>
-                
+
                 <div className="grid grid-cols-3 gap-4 mb-4">
                   <div className="bg-red-50 p-4 rounded-lg text-center">
                     <p className="text-sm text-gray-600">Total commandes</p>
@@ -2903,16 +2820,16 @@ function App() {
     return (
       <div>
         <h2 className="text-2xl font-bold mb-6 text-blue-600">💰 Catalogue produits</h2>
-        
+
         <button onClick={() => setShowNewProductForm(!showNewProductForm)} className="mb-4 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center gap-2">
           <Plus size={20} />Nouveau produit
         </button>
 
         {showNewProductForm && (
           <div className="bg-white p-6 rounded-lg shadow-md mb-6 space-y-4">
-            <input type="text" placeholder="Nom du produit" value={newProduct.name} onChange={(e) => setNewProduct({...newProduct, name: e.target.value})} className="w-full p-3 border rounded-lg" />
-            <input type="number" step="0.01" placeholder="Prix de base" value={newProduct.price} onChange={(e) => setNewProduct({...newProduct, price: e.target.value})} className="w-full p-3 border rounded-lg" />
-            
+            <input type="text" placeholder="Nom du produit" value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} className="w-full p-3 border rounded-lg" />
+            <input type="number" step="0.01" placeholder="Prix de base" value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })} className="w-full p-3 border rounded-lg" />
+
             {/* Option pour ajouter des déclinaisons */}
             <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
               <input
@@ -2934,7 +2851,7 @@ function App() {
               <div className="bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
                 <h4 className="font-bold mb-3 text-purple-800">🎨 Déclinaisons du produit</h4>
                 <p className="text-sm text-gray-600 mb-3">Ajoutez des variantes (ex: 38, 39, 40 pour des chaussures). L'ajustement de prix est optionnel.</p>
-                
+
                 <div className="space-y-2">
                   {productVariants.map((variant, index) => (
                     <div key={index} className="flex gap-2">
@@ -2986,7 +2903,7 @@ function App() {
                 <div className="flex-1">
                   <h3 className="text-lg font-bold">{product.name}</h3>
                   <p className="text-2xl font-bold text-blue-600 mt-2">{parseFloat(product.price).toFixed(2)} €</p>
-                  
+
                   {product.variants && product.variants.length > 0 && (
                     <div className="mt-3 space-y-1">
                       <p className="text-xs font-semibold text-purple-600 mb-2">🎨 Déclinaisons :</p>
@@ -3029,7 +2946,7 @@ function App() {
 
       return (
         <div>
-          <button 
+          <button
             onClick={() => setSelectedPaymentClient(null)}
             className="mb-4 text-blue-600 hover:text-blue-800 flex items-center gap-2"
           >
@@ -3044,7 +2961,7 @@ function App() {
                   Solde: {balance.toFixed(2)} €
                 </p>
               </div>
-              <button 
+              <button
                 onClick={() => deletePaymentClient(client.id)}
                 className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
               >
@@ -3095,14 +3012,14 @@ function App() {
                     type="text"
                     placeholder="Référence"
                     value={newPaymentOrder.reference}
-                    onChange={(e) => setNewPaymentOrder({...newPaymentOrder, reference: e.target.value})}
+                    onChange={(e) => setNewPaymentOrder({ ...newPaymentOrder, reference: e.target.value })}
                     className="w-full p-3 border rounded-lg"
                   />
                   <input
                     type="text"
                     placeholder="Numéro de commande"
                     value={newPaymentOrder.orderNumber}
-                    onChange={(e) => setNewPaymentOrder({...newPaymentOrder, orderNumber: e.target.value})}
+                    onChange={(e) => setNewPaymentOrder({ ...newPaymentOrder, orderNumber: e.target.value })}
                     className="w-full p-3 border rounded-lg"
                   />
                   <input
@@ -3110,13 +3027,13 @@ function App() {
                     step="0.01"
                     placeholder="Montant"
                     value={newPaymentOrder.amount}
-                    onChange={(e) => setNewPaymentOrder({...newPaymentOrder, amount: e.target.value})}
+                    onChange={(e) => setNewPaymentOrder({ ...newPaymentOrder, amount: e.target.value })}
                     className="w-full p-3 border rounded-lg"
                   />
                   <input
                     type="date"
                     value={newPaymentOrder.date}
-                    onChange={(e) => setNewPaymentOrder({...newPaymentOrder, date: e.target.value})}
+                    onChange={(e) => setNewPaymentOrder({ ...newPaymentOrder, date: e.target.value })}
                     className="w-full p-3 border rounded-lg"
                   />
                   <div className="flex items-center gap-2">
@@ -3124,7 +3041,7 @@ function App() {
                       type="checkbox"
                       id="shipped"
                       checked={newPaymentOrder.shipped}
-                      onChange={(e) => setNewPaymentOrder({...newPaymentOrder, shipped: e.target.checked})}
+                      onChange={(e) => setNewPaymentOrder({ ...newPaymentOrder, shipped: e.target.checked })}
                       className="w-5 h-5 cursor-pointer"
                     />
                     <label htmlFor="shipped" className="cursor-pointer">Commande expédiée</label>
@@ -3149,14 +3066,14 @@ function App() {
                         type="text"
                         placeholder="Référence"
                         value={editPaymentOrderForm.reference}
-                        onChange={(e) => setEditPaymentOrderForm({...editPaymentOrderForm, reference: e.target.value})}
+                        onChange={(e) => setEditPaymentOrderForm({ ...editPaymentOrderForm, reference: e.target.value })}
                         className="w-full p-2 border rounded-lg"
                       />
                       <input
                         type="text"
                         placeholder="Numéro de commande"
                         value={editPaymentOrderForm.orderNumber}
-                        onChange={(e) => setEditPaymentOrderForm({...editPaymentOrderForm, orderNumber: e.target.value})}
+                        onChange={(e) => setEditPaymentOrderForm({ ...editPaymentOrderForm, orderNumber: e.target.value })}
                         className="w-full p-2 border rounded-lg"
                       />
                       <input
@@ -3164,13 +3081,13 @@ function App() {
                         step="0.01"
                         placeholder="Montant"
                         value={editPaymentOrderForm.amount}
-                        onChange={(e) => setEditPaymentOrderForm({...editPaymentOrderForm, amount: e.target.value})}
+                        onChange={(e) => setEditPaymentOrderForm({ ...editPaymentOrderForm, amount: e.target.value })}
                         className="w-full p-2 border rounded-lg"
                       />
                       <input
                         type="date"
                         value={editPaymentOrderForm.date}
-                        onChange={(e) => setEditPaymentOrderForm({...editPaymentOrderForm, date: e.target.value})}
+                        onChange={(e) => setEditPaymentOrderForm({ ...editPaymentOrderForm, date: e.target.value })}
                         className="w-full p-2 border rounded-lg"
                       />
                       <div className="flex items-center gap-2">
@@ -3178,7 +3095,7 @@ function App() {
                           type="checkbox"
                           id={`edit-shipped-${order.id}`}
                           checked={editPaymentOrderForm.shipped}
-                          onChange={(e) => setEditPaymentOrderForm({...editPaymentOrderForm, shipped: e.target.checked})}
+                          onChange={(e) => setEditPaymentOrderForm({ ...editPaymentOrderForm, shipped: e.target.checked })}
                           className="w-5 h-5 cursor-pointer"
                         />
                         <label htmlFor={`edit-shipped-${order.id}`} className="cursor-pointer">Commande expédiée</label>
@@ -3243,20 +3160,20 @@ function App() {
                     step="0.01"
                     placeholder="Montant"
                     value={newPaymentTransaction.amount}
-                    onChange={(e) => setNewPaymentTransaction({...newPaymentTransaction, amount: e.target.value})}
+                    onChange={(e) => setNewPaymentTransaction({ ...newPaymentTransaction, amount: e.target.value })}
                     className="w-full p-3 border rounded-lg"
                   />
                   <input
                     type="date"
                     value={newPaymentTransaction.date}
-                    onChange={(e) => setNewPaymentTransaction({...newPaymentTransaction, date: e.target.value})}
+                    onChange={(e) => setNewPaymentTransaction({ ...newPaymentTransaction, date: e.target.value })}
                     className="w-full p-3 border rounded-lg"
                   />
                   <input
                     type="text"
                     placeholder="Note (optionnel)"
                     value={newPaymentTransaction.note}
-                    onChange={(e) => setNewPaymentTransaction({...newPaymentTransaction, note: e.target.value})}
+                    onChange={(e) => setNewPaymentTransaction({ ...newPaymentTransaction, note: e.target.value })}
                     className="w-full p-3 border rounded-lg"
                   />
                   <div className="flex gap-2">
@@ -3280,20 +3197,20 @@ function App() {
                         step="0.01"
                         placeholder="Montant"
                         value={editPaymentTransactionForm.amount}
-                        onChange={(e) => setEditPaymentTransactionForm({...editPaymentTransactionForm, amount: e.target.value})}
+                        onChange={(e) => setEditPaymentTransactionForm({ ...editPaymentTransactionForm, amount: e.target.value })}
                         className="w-full p-2 border rounded-lg"
                       />
                       <input
                         type="date"
                         value={editPaymentTransactionForm.date}
-                        onChange={(e) => setEditPaymentTransactionForm({...editPaymentTransactionForm, date: e.target.value})}
+                        onChange={(e) => setEditPaymentTransactionForm({ ...editPaymentTransactionForm, date: e.target.value })}
                         className="w-full p-2 border rounded-lg"
                       />
                       <input
                         type="text"
                         placeholder="Note (optionnel)"
                         value={editPaymentTransactionForm.note}
-                        onChange={(e) => setEditPaymentTransactionForm({...editPaymentTransactionForm, note: e.target.value})}
+                        onChange={(e) => setEditPaymentTransactionForm({ ...editPaymentTransactionForm, note: e.target.value })}
                         className="w-full p-2 border rounded-lg"
                       />
                       <div className="flex gap-2">
@@ -3340,7 +3257,7 @@ function App() {
     return (
       <div>
         <h2 className="text-2xl font-bold mb-6 text-blue-600">💳 Suivi des paiements</h2>
-        
+
         <button
           onClick={() => setShowNewPaymentClient(true)}
           className="mb-6 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center gap-2"
@@ -3354,7 +3271,7 @@ function App() {
               type="text"
               placeholder="Nom du client"
               value={newPaymentClient.name}
-              onChange={(e) => setNewPaymentClient({name: e.target.value})}
+              onChange={(e) => setNewPaymentClient({ name: e.target.value })}
               className="w-full p-3 border rounded-lg"
             />
             <div className="flex gap-2">
@@ -3378,9 +3295,8 @@ function App() {
               <div
                 key={client.id}
                 onClick={() => setSelectedPaymentClient(client.id)}
-                className={`bg-white p-6 rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-all border-2 ${
-                  balance < 0 ? 'border-red-300' : 'border-green-300'
-                }`}
+                className={`bg-white p-6 rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-all border-2 ${balance < 0 ? 'border-red-300' : 'border-green-300'
+                  }`}
               >
                 <h3 className="text-xl font-bold mb-3">{client.name}</h3>
                 <p className={`text-3xl font-bold mb-3 ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -3410,27 +3326,25 @@ function App() {
         <div className="bg-white rounded-lg shadow-md p-4 mb-4">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-gray-800">GESTION</h1>
-            
+
             {/* Boutons de navigation principaux */}
             <div className="flex gap-3">
               <button
                 onClick={() => setActiveMode('commande')}
-                className={`px-6 py-3 rounded-lg font-bold flex items-center gap-2 transition-all ${
-                  activeMode === 'commande'
-                    ? 'bg-blue-600 text-white shadow-lg'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
+                className={`px-6 py-3 rounded-lg font-bold flex items-center gap-2 transition-all ${activeMode === 'commande'
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
               >
                 <Package size={20} />
                 Gestion Commandes
               </button>
               <button
                 onClick={() => setActiveMode('paiement')}
-                className={`px-6 py-3 rounded-lg font-bold flex items-center gap-2 transition-all ${
-                  activeMode === 'paiement'
-                    ? 'bg-purple-600 text-white shadow-lg'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
+                className={`px-6 py-3 rounded-lg font-bold flex items-center gap-2 transition-all ${activeMode === 'paiement'
+                  ? 'bg-purple-600 text-white shadow-lg'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
               >
                 <CreditCard size={20} />
                 Suivi Paiements
@@ -3484,7 +3398,7 @@ function App() {
               {activeTab === 'products' && renderProductsTab()}
             </>
           )}
-          
+
           {activeMode === 'paiement' && renderPaymentTab()}
         </div>
 
