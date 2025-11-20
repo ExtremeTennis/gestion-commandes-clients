@@ -2539,6 +2539,186 @@ function App() {
     );
   };
 
+  const generatePDF = (order) => {
+    // Créer une nouvelle fenêtre pour l'impression
+    const printWindow = window.open('', '', 'width=800,height=600');
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Commande #${order.id} - ${order.client_name}</title>
+        <style>
+          @media print {
+            @page { margin: 2cm; }
+          }
+          body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #10b981;
+            padding-bottom: 20px;
+          }
+          .header h1 {
+            color: #10b981;
+            margin: 0;
+            font-size: 28px;
+          }
+          .info-section {
+            margin-bottom: 25px;
+          }
+          .info-section h2 {
+            color: #10b981;
+            font-size: 18px;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #d1fae5;
+            padding-bottom: 5px;
+          }
+          .client-info, .address-info {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+          }
+          .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+          }
+          .items-table th {
+            background: #10b981;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+          }
+          .items-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+          }
+          .items-table tr:nth-child(even) {
+            background: #f9fafb;
+          }
+          .total-section {
+            text-align: right;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 3px solid #10b981;
+          }
+          .total-section .total {
+            font-size: 24px;
+            font-weight: bold;
+            color: #10b981;
+          }
+          .shipping-info {
+            background: #d1fae5;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+          }
+          .footer {
+            margin-top: 40px;
+            text-align: center;
+            color: #6b7280;
+            font-size: 12px;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 20px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Bon de commande</h1>
+          <p style="margin: 5px 0; color: #6b7280;">Commande #${order.id}</p>
+        </div>
+
+        <div class="info-section">
+          <h2>Informations client</h2>
+          <div class="client-info">
+            <p style="margin: 5px 0;"><strong>Nom :</strong> ${order.client_name}</p>
+            <p style="margin: 5px 0;"><strong>Email :</strong> ${order.client_email}</p>
+          </div>
+        </div>
+
+        <div class="info-section">
+          <h2>Adresse de livraison</h2>
+          <div class="address-info">
+            <p style="margin: 5px 0;"><strong>${order.address_label}</strong></p>
+            <p style="margin: 5px 0; white-space: pre-line;">${order.client_address}</p>
+          </div>
+        </div>
+
+        <div class="info-section">
+          <h2>Détails de la commande</h2>
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Quantité</th>
+                <th>Produit</th>
+                <th style="text-align: right;">Prix unitaire</th>
+                <th style="text-align: right;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${order.items.map(item => `
+                <tr>
+                  <td style="font-weight: bold; font-size: 18px; color: #10b981;">${item.quantity}</td>
+                  <td>
+                    ${item.name}
+                    ${item.variant ? `<span style="color: #9333ea; font-weight: bold;"> (${item.variant})</span>` : ''}
+                  </td>
+                  <td style="text-align: right;">${item.price.toFixed(2)} €</td>
+                  <td style="text-align: right; font-weight: bold;">${(item.price * item.quantity).toFixed(2)} €</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="total-section">
+          <p style="margin: 5px 0; font-size: 18px;"><strong>Total :</strong> <span class="total">${parseFloat(order.total).toFixed(2)} €</span></p>
+        </div>
+
+        ${order.shipped_date ? `
+          <div class="shipping-info">
+            <p style="margin: 5px 0;"><strong>📅 Date de commande :</strong> ${new Date(order.date).toLocaleDateString('fr-FR')}</p>
+            <p style="margin: 5px 0;"><strong>🚚 Date d'expédition :</strong> ${new Date(order.shipped_date).toLocaleDateString('fr-FR')}</p>
+            ${order.carrier ? `<p style="margin: 5px 0;"><strong>Transporteur :</strong> ${order.carrier}</p>` : ''}
+            ${order.tracking_numbers && order.tracking_numbers.length > 0 ? `
+              <p style="margin: 5px 0;"><strong>Numéros de suivi :</strong></p>
+              <ul style="margin: 5px 0; padding-left: 20px;">
+                ${order.tracking_numbers.map(num => `<li>${num}</li>`).join('')}
+              </ul>
+            ` : ''}
+          </div>
+        ` : ''}
+
+        <div class="footer">
+          <p>Document généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+
+    // Attendre que le contenu soit chargé puis imprimer
+    printWindow.onload = function() {
+      printWindow.focus();
+      printWindow.print();
+      // Fermer la fenêtre après l'impression (optionnel)
+      // printWindow.close();
+    };
+  };
+
   const renderShippedTab = () => {
     return (
       <div>
@@ -2577,9 +2757,14 @@ function App() {
                 <p className="text-sm text-green-600 font-semibold">🚚 Expédié : {new Date(order.shipped_date).toLocaleDateString('fr-FR')}</p>
                 <span className="inline-block mt-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">✅ Expédié</span>
               </div>
-              <button onClick={() => sendShippingEmail(order)} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
-                <Send size={18} />Email
-              </button>
+              <div className="flex gap-2">
+                <button onClick={() => generatePDF(order)} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2">
+                  <Download size={18} />PDF
+                </button>
+                <button onClick={() => sendShippingEmail(order)} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                  <Send size={18} />Email
+                </button>
+              </div>
             </div>
             <div className="space-y-2 mb-4">
               {order.items.map(item => (
