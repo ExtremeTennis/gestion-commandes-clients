@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Check, Package, Users, CreditCard, Send, Download, Edit, X, MapPin, Star } from 'lucide-react';
 import { supabase } from './supabaseClient';
+import jsPDF from 'jspdf';
 
 function App() {
   // États
@@ -2540,183 +2541,157 @@ function App() {
   };
 
   const generatePDF = (order) => {
-    // Créer une nouvelle fenêtre pour l'impression
-    const printWindow = window.open('', '', 'width=800,height=600');
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    let yPosition = 20;
 
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>Commande #${order.id} - ${order.client_name}</title>
-        <style>
-          @media print {
-            @page { margin: 2cm; }
-          }
-          body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            color: #333;
-          }
-          .header {
-            text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 3px solid #10b981;
-            padding-bottom: 20px;
-          }
-          .header h1 {
-            color: #10b981;
-            margin: 0;
-            font-size: 28px;
-          }
-          .info-section {
-            margin-bottom: 25px;
-          }
-          .info-section h2 {
-            color: #10b981;
-            font-size: 18px;
-            margin-bottom: 10px;
-            border-bottom: 2px solid #d1fae5;
-            padding-bottom: 5px;
-          }
-          .client-info, .address-info {
-            background: #f9fafb;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-          }
-          .items-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-          }
-          .items-table th {
-            background: #10b981;
-            color: white;
-            padding: 12px;
-            text-align: left;
-            font-weight: bold;
-          }
-          .items-table td {
-            padding: 12px;
-            border-bottom: 1px solid #e5e7eb;
-          }
-          .items-table tr:nth-child(even) {
-            background: #f9fafb;
-          }
-          .total-section {
-            text-align: right;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 3px solid #10b981;
-          }
-          .total-section .total {
-            font-size: 24px;
-            font-weight: bold;
-            color: #10b981;
-          }
-          .shipping-info {
-            background: #d1fae5;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-          }
-          .footer {
-            margin-top: 40px;
-            text-align: center;
-            color: #6b7280;
-            font-size: 12px;
-            border-top: 1px solid #e5e7eb;
-            padding-top: 20px;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1>Bon de commande</h1>
-          <p style="margin: 5px 0; color: #6b7280;">Commande #${order.id}</p>
-        </div>
-
-        <div class="info-section">
-          <h2>Informations client</h2>
-          <div class="client-info">
-            <p style="margin: 5px 0;"><strong>Nom :</strong> ${order.client_name}</p>
-            <p style="margin: 5px 0;"><strong>Email :</strong> ${order.client_email}</p>
-          </div>
-        </div>
-
-        <div class="info-section">
-          <h2>Adresse de livraison</h2>
-          <div class="address-info">
-            <p style="margin: 5px 0;"><strong>${order.address_label}</strong></p>
-            <p style="margin: 5px 0; white-space: pre-line;">${order.client_address}</p>
-          </div>
-        </div>
-
-        <div class="info-section">
-          <h2>Détails de la commande</h2>
-          <table class="items-table">
-            <thead>
-              <tr>
-                <th>Quantité</th>
-                <th>Produit</th>
-                <th style="text-align: right;">Prix unitaire</th>
-                <th style="text-align: right;">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${order.items.map(item => `
-                <tr>
-                  <td style="font-weight: bold; font-size: 18px; color: #10b981;">${item.quantity}</td>
-                  <td>
-                    ${item.name}
-                    ${item.variant ? `<span style="color: #9333ea; font-weight: bold;"> (${item.variant})</span>` : ''}
-                  </td>
-                  <td style="text-align: right;">${item.price.toFixed(2)} €</td>
-                  <td style="text-align: right; font-weight: bold;">${(item.price * item.quantity).toFixed(2)} €</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-
-        <div class="total-section">
-          <p style="margin: 5px 0; font-size: 18px;"><strong>Total :</strong> <span class="total">${parseFloat(order.total).toFixed(2)} €</span></p>
-        </div>
-
-        ${order.shipped_date ? `
-          <div class="shipping-info">
-            <p style="margin: 5px 0;"><strong>📅 Date de commande :</strong> ${new Date(order.date).toLocaleDateString('fr-FR')}</p>
-            <p style="margin: 5px 0;"><strong>🚚 Date d'expédition :</strong> ${new Date(order.shipped_date).toLocaleDateString('fr-FR')}</p>
-            ${order.carrier ? `<p style="margin: 5px 0;"><strong>Transporteur :</strong> ${order.carrier}</p>` : ''}
-            ${order.tracking_numbers && order.tracking_numbers.length > 0 ? `
-              <p style="margin: 5px 0;"><strong>Numéros de suivi :</strong></p>
-              <ul style="margin: 5px 0; padding-left: 20px;">
-                ${order.tracking_numbers.map(num => `<li>${num}</li>`).join('')}
-              </ul>
-            ` : ''}
-          </div>
-        ` : ''}
-
-        <div class="footer">
-          <p>Document généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}</p>
-        </div>
-      </body>
-      </html>
-    `;
-
-    printWindow.document.write(html);
-    printWindow.document.close();
-
-    // Attendre que le contenu soit chargé puis imprimer
-    printWindow.onload = function() {
-      printWindow.focus();
-      printWindow.print();
-      // Fermer la fenêtre après l'impression (optionnel)
-      // printWindow.close();
+    // Fonction helper pour ajouter du texte centré
+    const addCenteredText = (text, y, fontSize = 12) => {
+      doc.setFontSize(fontSize);
+      const textWidth = doc.getTextWidth(text);
+      doc.text(text, (pageWidth - textWidth) / 2, y);
     };
+
+    // En-tête
+    doc.setFont('helvetica', 'bold');
+    addCenteredText('BON DE COMMANDE', yPosition, 18);
+    yPosition += 8;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    addCenteredText(`Commande #${order.id}`, yPosition);
+    yPosition += 12;
+
+    // Ligne de séparation
+    doc.setDrawColor(16, 185, 129);
+    doc.setLineWidth(0.5);
+    doc.line(margin, yPosition, pageWidth - margin, yPosition);
+    yPosition += 10;
+
+    // Informations client
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('Informations client', margin, yPosition);
+    yPosition += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text(`Nom : ${order.client_name}`, margin + 5, yPosition);
+    yPosition += 5;
+    doc.text(`Email : ${order.client_email}`, margin + 5, yPosition);
+    yPosition += 10;
+
+    // Adresse de livraison
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('Adresse de livraison', margin, yPosition);
+    yPosition += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text(order.address_label, margin + 5, yPosition);
+    yPosition += 5;
+
+    // Découper l'adresse en lignes
+    const addressLines = order.client_address.split('\n');
+    addressLines.forEach(line => {
+      doc.text(line, margin + 5, yPosition);
+      yPosition += 5;
+    });
+    yPosition += 5;
+
+    // Détails de la commande
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('Détails de la commande', margin, yPosition);
+    yPosition += 8;
+
+    // En-tête du tableau
+    doc.setFillColor(16, 185, 129);
+    doc.rect(margin, yPosition - 5, pageWidth - 2 * margin, 8, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text('Qté', margin + 5, yPosition);
+    doc.text('Produit', margin + 25, yPosition);
+    doc.text('Prix unit.', pageWidth - margin - 55, yPosition);
+    doc.text('Total', pageWidth - margin - 25, yPosition);
+    yPosition += 8;
+
+    // Lignes du tableau
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'normal');
+    order.items.forEach((item, index) => {
+      if (yPosition > 250) {
+        doc.addPage();
+        yPosition = 20;
+      }
+
+      // Alternance de couleur de fond
+      if (index % 2 === 0) {
+        doc.setFillColor(249, 250, 251);
+        doc.rect(margin, yPosition - 5, pageWidth - 2 * margin, 8, 'F');
+      }
+
+      doc.setFont('helvetica', 'bold');
+      doc.text(item.quantity.toString(), margin + 5, yPosition);
+      doc.setFont('helvetica', 'normal');
+
+      let productName = item.name;
+      if (item.variant) {
+        productName += ` (${item.variant})`;
+      }
+      doc.text(productName, margin + 25, yPosition);
+      doc.text(`${item.price.toFixed(2)} €`, pageWidth - margin - 55, yPosition);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${(item.price * item.quantity).toFixed(2)} €`, pageWidth - margin - 25, yPosition);
+      yPosition += 8;
+    });
+
+    yPosition += 5;
+
+    // Total
+    doc.setDrawColor(16, 185, 129);
+    doc.setLineWidth(0.5);
+    doc.line(margin, yPosition, pageWidth - margin, yPosition);
+    yPosition += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.text('Total :', pageWidth - margin - 60, yPosition);
+    doc.setTextColor(16, 185, 129);
+    doc.text(`${parseFloat(order.total).toFixed(2)} €`, pageWidth - margin - 25, yPosition);
+    doc.setTextColor(0, 0, 0);
+    yPosition += 10;
+
+    // Informations d'expédition
+    if (order.shipped_date) {
+      yPosition += 5;
+      doc.setFillColor(209, 250, 229);
+      doc.rect(margin, yPosition - 5, pageWidth - 2 * margin, 25, 'F');
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      yPosition += 2;
+      doc.text(`Date de commande : ${new Date(order.date).toLocaleDateString('fr-FR')}`, margin + 5, yPosition);
+      yPosition += 6;
+      doc.text(`Date d'expédition : ${new Date(order.shipped_date).toLocaleDateString('fr-FR')}`, margin + 5, yPosition);
+      yPosition += 6;
+
+      if (order.carrier) {
+        doc.text(`Transporteur : ${order.carrier}`, margin + 5, yPosition);
+        yPosition += 6;
+      }
+
+      if (order.tracking_numbers && order.tracking_numbers.length > 0) {
+        doc.text(`Numéros de suivi : ${order.tracking_numbers.join(', ')}`, margin + 5, yPosition);
+      }
+    }
+
+    // Pied de page
+    doc.setFontSize(8);
+    doc.setTextColor(107, 114, 128);
+    const footerText = `Document généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}`;
+    addCenteredText(footerText, doc.internal.pageSize.getHeight() - 10, 8);
+
+    // Télécharger le PDF
+    doc.save(`Commande_${order.id}_${order.client_name.replace(/\s/g, '_')}.pdf`);
   };
 
   const renderShippedTab = () => {
